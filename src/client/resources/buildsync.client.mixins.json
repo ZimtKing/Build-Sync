@@ -1,0 +1,8 @@
+{
+	"required": false,
+	"package": "de.buildsync.client.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"LevelMixin"
+	]
+}

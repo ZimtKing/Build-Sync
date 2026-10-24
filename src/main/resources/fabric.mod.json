@@ -1,0 +1,25 @@
+{
+	"schemaVersion": 1,
+	"id": "buildsync",
+	"version": "${version}",
+	"name": "BuildSync",
+	"description": "Sends the current build state (filtered, without xray advantages) to the local building-plan tool.",
+	"authors": ["ZimtKing"],
+	"license": "MIT",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["de.buildsync.client.BuildSyncClient"]
+	},
+	"mixins": [
+		{
+			"config": "buildsync.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
