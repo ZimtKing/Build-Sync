@@ -4,7 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 
-/** Starts the bridge + WebSocket server with a simulated world (for end-to-end tests with Node/browser). Arguments: port, code. */
+/** Starts the bridge + WebSocket server with a simulated world (for end-to-end tests with Node/browser). Arguments: port, code [, viewer page path -> LAN mode]. */
 public class ServerDemo {
     public static void main(String[] a) throws Exception {
         int port = Integer.parseInt(a[0]); String code = a[1];
@@ -13,6 +13,11 @@ public class ServerDemo {
         Bridge b = new Bridge(dir, "test", "26.2", w.pal, s -> System.err.println("LOG " + s));
         LiveServer s = new LiveServer(port, 1, code, Set.of(), b, x -> System.err.println("SRV " + x));
         s.start();
+        if (a.length > 2) {   // optional third argument: path of the viewer page -> LAN mode on and the page is served (like the real mod)
+            byte[] page = Files.readAllBytes(Path.of(a[2]));
+            s.setPage(() -> page);
+            s.setLan(true);
+        }
         System.out.println("READY " + s.port());
         System.out.flush();
         java.util.concurrent.ConcurrentLinkedQueue<String> cmds = new java.util.concurrent.ConcurrentLinkedQueue<>();

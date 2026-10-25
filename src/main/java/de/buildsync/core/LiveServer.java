@@ -19,11 +19,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
- * Tiny WebSocket server (RFC 6455) on 127.0.0.1 only. No dependencies.
- * Protection: loopback only · host check (against DNS rebinding) · origin check (web pages from other origins are rejected) ·
+ * Tiny WebSocket server (RFC 6455). No dependencies. By default it listens on 127.0.0.1 only.
+ * Optional LAN mode (off by default, see {@link #setLan}): also listens on the home network, but accepts only connections
+ * from private addresses (192.168.x.x, 10.x.x.x, 172.16-31.x.x, link-local, IPv6 unique-local) and never from the internet.
+ * Protection: host check (literal IP only, against DNS rebinding) · origin check (web pages from other origins are rejected) ·
  * pairing code with lockout after failed attempts · limited message size · one active connection.
+ * In LAN mode it can also serve the viewer page over HTTP (see {@link #setPage}), so a phone only needs the address.
+ * Note: the connection is not encrypted (ws://, http://), so LAN mode is only meant for networks you trust.
  */
 public final class LiveServer implements AutoCloseable {
     public interface Listener {
@@ -37,7 +42,9 @@ public final class LiveServer implements AutoCloseable {
     private final Set<String> origins;
     private final Listener listener;
     private final Consumer<String> log;
-    private ServerSocket server;
+    private volatile ServerSocket server;
+    private volatile boolean lan;
+    private volatile Supplier<byte[]> page;
     private volatile boolean closed;
     private volatile Conn active;
     private int fails;
@@ -53,6 +60,75 @@ public final class LiveServer implements AutoCloseable {
 
     public int port() { return port; }
 
+    /**
+     * Sets the page (the viewer, index.html) that is served over plain HTTP, but only while LAN mode is on and only
+     * for "GET /" and "GET /index.html". This lets a phone open http://PC-IP:port instead of a local file.
+     */
+    public void setPage(Supplier<byte[]> p) { this.page = p; }
+
+    /** True while a viewer (the tool in a browser) is connected and has entered the right code. */
+    public boolean viewerConnected() { Conn c = active; return c != null && c.authed() && c.isOpen(); }
+
+    /** True while the server is also reachable from the home network. */
+    public boolean lanOn() { return lan; }
+
+    /**
+     * Switches LAN mode. Off = loopback only (default). On = all interfaces, but only private remote addresses are served.
+     * The port stays the same; running connections are kept. Throws if the port cannot be re-bound.
+     */
+    public synchronized void setLan(boolean on) throws IOException {
+        if (on == lan || closed || port < 0) return;
+        ServerSocket old = server;
+        try { if (old != null) old.close(); } catch (IOException ignored) {}   // the old socket must be gone before the port can be bound again
+        ServerSocket s;
+        try { s = bindOn(on); }
+        catch (IOException e) {   // could not switch: go back to the previous mode so the server keeps working
+            s = bindOn(lan); server = s; Thread t = new Thread(() -> acceptLoop(server), "buildsync-accept"); t.setDaemon(true); t.start();
+            throw e;
+        }
+        server = s; lan = on;
+        final ServerSocket fs = s;
+        Thread t = new Thread(() -> acceptLoop(fs), "buildsync-accept"); t.setDaemon(true); t.start();
+        log.accept(on ? "LAN mode ON (port " + port + ")" : "LAN mode OFF");
+    }
+
+    /** Binds the listening socket; retries briefly because a just-closed socket may release the port a moment later. */
+    private ServerSocket bindOn(boolean wide) throws IOException {
+        IOException last = null;
+        for (int i = 0; i < 40; i++) {
+            ServerSocket s = new ServerSocket();
+            try {
+                s.setReuseAddress(true);
+                s.bind(new InetSocketAddress(InetAddress.getByAddress(wide ? new byte[]{0, 0, 0, 0} : new byte[]{127, 0, 0, 1}), port), 8);
+                return s;
+            } catch (IOException e) {
+                last = e; try { s.close(); } catch (IOException ignored) {}
+                try { Thread.sleep(50); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+            }
+        }
+        throw last;
+    }
+
+    /** Private or local address (never a public internet address). */
+    static boolean isPrivate(InetAddress a) {
+        if (a == null) return false;
+        if (a.isLoopbackAddress() || a.isSiteLocalAddress() || a.isLinkLocalAddress()) return true;
+        byte[] b = a.getAddress();
+        return b.length == 16 && (b[0] & 0xfe) == 0xfc;   // IPv6 unique-local fc00::/7
+    }
+
+    /** Host header allowed? Loopback names always; in LAN mode additionally a literal private IP with the right port (no DNS names). */
+    static boolean hostAllowed(String host, int port, boolean lan) {
+        if (host.equals("127.0.0.1:" + port) || host.equals("localhost:" + port) || host.equals("[::1]:" + port)) return true;
+        if (!lan) return false;
+        String lit; String ps;
+        if (host.startsWith("[")) { int e = host.indexOf(']'); if (e < 0 || e + 1 >= host.length() || host.charAt(e + 1) != ':') return false; lit = host.substring(1, e); ps = host.substring(e + 2); }
+        else { int k = host.lastIndexOf(':'); if (k < 0) return false; lit = host.substring(0, k); ps = host.substring(k + 1); }
+        if (!ps.equals(String.valueOf(port))) return false;
+        if (!lit.matches("[0-9]{1,3}(\\.[0-9]{1,3}){3}") && !(lit.indexOf(':') >= 0 && lit.matches("[0-9a-fA-F:.]{2,45}"))) return false;   // literal only, so no DNS lookup can happen
+        try { return isPrivate(InetAddress.getByName(lit)); } catch (Exception e) { return false; }
+    }
+
     public int start() throws IOException {
         IOException last = null;
         for (int i = 0; i < tries; i++) {
@@ -61,7 +137,7 @@ public final class LiveServer implements AutoCloseable {
                 s.setReuseAddress(false);
                 s.bind(new InetSocketAddress(InetAddress.getByAddress(new byte[]{127, 0, 0, 1}), basePort + i), 8);
                 server = s; port = basePort + i;
-                Thread t = new Thread(this::acceptLoop, "buildsync-accept"); t.setDaemon(true); t.start();
+                Thread t = new Thread(() -> acceptLoop(s), "buildsync-accept"); t.setDaemon(true); t.start();
                 return port;
             } catch (IOException e) { last = e; }
         }
@@ -74,12 +150,13 @@ public final class LiveServer implements AutoCloseable {
         Conn c = active; if (c != null) c.close();
     }
 
-    private void acceptLoop() {
-        while (!closed) {
+    private void acceptLoop(ServerSocket srv) {
+        while (!closed && srv == server) {
             try {
-                Socket s = server.accept();
+                Socket s = srv.accept();
+                if (lan && !isPrivate(s.getInetAddress())) { try { s.close(); } catch (IOException ignored) {} log.accept("rejected: non-private address"); continue; }
                 Thread t = new Thread(() -> serve(s), "buildsync-conn"); t.setDaemon(true); t.start();
-            } catch (IOException e) { if (!closed) log.accept("accept: " + e.getMessage()); }
+            } catch (IOException e) { if (!closed && srv == server) log.accept("accept: " + e.getMessage()); }
         }
     }
 
@@ -147,10 +224,23 @@ public final class LiveServer implements AutoCloseable {
             Map<String, String> h = new java.util.HashMap<>();
             for (int i = 1; i < lines.length; i++) { int k = lines[i].indexOf(':'); if (k > 0) h.put(lines[i].substring(0, k).trim().toLowerCase(Locale.ROOT), lines[i].substring(k + 1).trim()); }
             String host = h.getOrDefault("host", "");
-            boolean hostOk = host.equals("127.0.0.1:" + port) || host.equals("localhost:" + port) || host.equals("[::1]:" + port);
+            boolean hostOk = hostAllowed(host, port, lan);
             String origin = h.get("origin");
-            boolean originOk = origin == null || origin.equals("null") || origin.startsWith("file:") || origins.contains(origin);
+            boolean originOk = origin == null || origin.equals("null") || origin.startsWith("file:") || origins.contains(origin) || (lan && origin.equals("http://" + host));
             boolean ws = rl.length >= 2 && rl[0].equals("GET") && "websocket".equalsIgnoreCase(h.getOrDefault("upgrade", "")) && h.containsKey("sec-websocket-key");
+            // Serve the viewer page to devices in the home network (LAN mode only, fixed paths only, no file access)
+            Supplier<byte[]> pg = page;
+            if (!ws && lan && hostOk && pg != null && rl.length >= 2 && rl[0].equals("GET")) {
+                String path = rl[1]; int q = path.indexOf('?'); if (q >= 0) path = path.substring(0, q);
+                boolean known = path.equals("/") || path.equals("/index.html");
+                byte[] body = known ? pg.get() : null;
+                String status = body != null ? "200 OK" : "404 Not Found";
+                if (body == null) body = "Not found.".getBytes(StandardCharsets.UTF_8);
+                out.write(("HTTP/1.1 " + status + "\r\nContent-Type: " + (known ? "text/html; charset=utf-8" : "text/plain; charset=utf-8")
+                    + "\r\nContent-Length: " + body.length + "\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nX-Frame-Options: DENY\r\nReferrer-Policy: no-referrer\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.US_ASCII));
+                out.write(body); out.flush(); s.close();
+                return;
+            }
             if (!hostOk || !originOk || !ws) {
                 String body = !ws ? "BuildSync: WebSocket only." : "Not allowed.";
                 out.write(("HTTP/1.1 " + (!ws ? "426 Upgrade Required" : "403 Forbidden") + "\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: " + body.getBytes(StandardCharsets.UTF_8).length + "\r\nConnection: close\r\n\r\n" + body).getBytes(StandardCharsets.UTF_8));

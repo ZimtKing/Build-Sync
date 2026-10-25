@@ -1,0 +1,2242 @@
+<!DOCTYPE html>
+<!-- Minecraft Build Guide 3D v23 · Author: ZimtKing · 2026-10-25 · Belongs to the BuildSync mod v0.3.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Minecraft Build Guide 3D</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{--bg:#14171d;--panel:#1b1f27;--card:#232834;--line:#2f3644;--txt:#e8eaee;--dim:#98a1b0;--accent:#5cd05c;}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;-webkit-text-size-adjust:100%;background:var(--bg);color:var(--txt);font:14px/1.4 system-ui,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+#app{display:flex;height:100%;height:100dvh}
+#view{flex:1;position:relative;min-width:0}
+#view canvas{display:block;width:100%;height:100%;outline:none}
+#panel{width:350px;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+h1{font-size:17px;margin:0 0 2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px}
+.card h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin:0 0 8px}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.row.between{justify-content:space-between}
+button,select,.btn{background:#2d3544;color:var(--txt);border:1px solid #3b4456;border-radius:6px;padding:6px 10px;font:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.btn{display:inline-block;line-height:1.4;user-select:none;-webkit-user-select:none}
+button:hover,.filebtn:hover .btn{background:#38425a}
+button.primary,.btn.primary{background:#2f7d32;border-color:#3f9a43}
+button.primary:hover,.filebtn:hover .btn.primary{background:#38963c}
+/* File picker: the <input type=file> sits invisibly at full size OVER the button.
+   Every touch/click hits the native input directly (iPadOS/iOS Safari blocks .click() on hidden inputs). */
+.filebtn{position:relative;display:inline-block;overflow:hidden;border-radius:6px}
+.filebtn input[type=file]{position:absolute;top:0;left:0;width:100%;height:100%;margin:0;padding:0;border:0;opacity:0;cursor:pointer;font-size:200px;z-index:2;-webkit-appearance:none;appearance:none}
+button.danger{border-color:#7a3a3a}
+button:disabled{opacity:.4;cursor:default}
+input[type=range]{width:100%;height:28px;accent-color:var(--accent)}
+label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.dim{color:var(--dim);font-size:12px}
+.bar{height:16px;background:#10131a;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.bar>div{height:100%;width:0;background:linear-gradient(90deg,#3aa83f,#7fe36f);transition:width .2s}
+.big{font-size:26px;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;text-align:center}
+.stats b{display:block;font-size:16px}
+.grid2{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center}
+.grid2 select{width:100%}
+#matList{display:flex;flex-direction:column;gap:2px;max-height:300px;overflow-y:auto}
+.mat{display:flex;align-items:center;gap:8px;padding:3px 6px;border-radius:5px;cursor:pointer;border:1px solid transparent}
+.mat:hover{background:#2d3544}
+.mat.active{border-color:var(--accent);background:#263a2a}
+.mat.complete .cnt{color:var(--accent)}
+.sw{width:16px;height:16px;border-radius:3px;border:1px solid #0006;flex:none}
+.mat .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mat .cnt{font-variant-numeric:tabular-nums;color:var(--dim);font-size:12px}
+#compass{position:absolute;right:12px;top:12px;display:none;width:38px;height:38px;border-radius:50%;background:#000a;color:#fff;font-weight:700;font-size:13px;text-align:center;line-height:1.05;padding-top:4px;box-sizing:border-box;pointer-events:none}
+#compass::after{content:"\2191";display:block;font-size:15px;line-height:1}
+body.nomouse,body.nomouse *{cursor:none !important}
+body.nomouse #panel{pointer-events:none}
+body.nomouse #view::after{content:"+";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#fff;font-size:26px;font-weight:300;text-shadow:0 0 3px #000,0 0 3px #000;pointer-events:none}
+#speedHud{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:none;background:#000a;padding:6px 12px;border-radius:8px;font-size:13px;pointer-events:none}
+#hud2d{position:absolute;right:12px;bottom:12px;display:none;background:#000a;padding:6px 10px;border-radius:8px;font-size:13px;pointer-events:none;font-variant-numeric:tabular-nums}
+body.mode2d #compass,body.mode2d #hud2d{display:block}
+.toggle2d{display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 10px;border:1px solid #3b4456;border-radius:8px;background:#232a38}
+body.mode2d .toggle2d{border-color:var(--accent);background:#233a4d}
+#toast{position:absolute;left:12px;bottom:12px;background:#000a;padding:8px 12px;border-radius:8px;font-size:13px;pointer-events:none;max-width:70%;display:none}
+#hint{position:absolute;left:12px;top:12px;background:#0007;padding:6px 10px;border-radius:8px;font-size:12px;color:#dfe6f2;pointer-events:none;max-width:80%}
+#boot{position:fixed;top:0;left:0;right:0;bottom:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
+#boot .box{max-width:560px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;line-height:1.5}
+#boot h1{font-size:18px;margin:0 0 8px}#boot.err h1{color:#ff8f8f}
+#boot pre{white-space:pre-wrap;word-break:break-word;background:#0006;padding:8px;border-radius:6px;font-size:12px;max-height:30vh;overflow:auto}
+#boot button{margin-top:8px}
+#drop{position:fixed;top:0;left:0;right:0;bottom:0;background:#000b;display:none;align-items:center;justify-content:center;font-size:28px;z-index:10;pointer-events:none}
+#loading{position:absolute;top:0;left:0;right:0;bottom:0;background:#000a;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:5;font-size:16px}
+#loading .spin{width:34px;height:34px;border:4px solid #fff3;border-top-color:#7fe36f;border-radius:50%;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#viewTabs{position:absolute;left:50%;top:10px;transform:translateX(-50%);display:none;gap:4px;background:#000a;padding:4px;border-radius:10px;z-index:3}
+#viewTabs.on{display:flex}
+#viewTabs button{padding:5px 12px;background:#2d3544}
+#viewTabs button.active{background:#2f7d32;border-color:#3f9a43}
+#viewTabs button:disabled{opacity:.35}
+body.virt .progOnly{display:none !important}
+input[type=text],input[type=number]{background:#10131a;color:var(--txt);border:1px solid #3b4456;border-radius:6px;padding:6px 8px;font:inherit;min-width:0;width:100%}
+input[type=number]{font-variant-numeric:tabular-nums}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.grid3 label{display:block;font-size:11px;color:var(--dim)}
+.okTxt{color:#7fe36f}.errTxt{color:#ff9a9a}.warnTxt{color:#ffd37a}
+#livePlace.locked input,#livePlace.locked select{opacity:.55;pointer-events:none}
+@media (max-width:800px){#app{flex-direction:column}#panel{width:100%;height:45%;border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div id="boot"><div class="box"><h1 id="bootT">Loading Minecraft Build Guide …</h1>
+<div id="bootM">Libraries (three.js) are loading. An internet connection is needed on the first start.</div>
+<noscript><p><b>JavaScript is disabled here.</b> This happens when the file is opened in the Files app preview (Quick Look).
+Open the file in Safari/Chrome instead (e.g. via "Share → Open in Safari", a browser with file support such as "Documents" by Readdle, or from a web page/GitHub&nbsp;Pages).</p></noscript></div></div>
+<div id="app">
+  <div id="view">
+    <div id="hint">Spectator flight: drag: look around · WASD: fly · Space/Shift: up/down · Ctrl: faster · mouse wheel: flight speed · L: capture mouse · touch: 1 finger look, 2 fingers: pinch = forward/back, drag = sideways/up/down · tap/click: mark block · PgUp/PgDn: layer · I: toggle Plan/Current</div>
+    <div id="viewTabs"><button type="button" data-v="plan" title="Planned state – key I toggles planned/current state">Plan</button><button type="button" data-v="current" title="Current state in Minecraft">Current</button><button type="button" data-v="pv" title="Preview of the surroundings">Preview</button></div>
+    <div id="speedHud"></div>
+    <div id="toast"></div>
+    <div id="compass">N</div>
+    <div id="hud2d"></div>
+    <div id="loading"><div class="spin"></div><div id="loadingText">Loading …</div></div>
+  </div>
+  <aside id="panel">
+    <h1>⛏ Minecraft Build Guide 3D <span class="dim" style="font-size:11px;font-weight:400">v23 · ZimtKing</span></h1>
+
+    <div class="card">
+      <h2>Load building plan</h2>
+      <div class="row">
+        <div class="filebtn"><span class="btn primary" id="btnOpen">Open file…</span><input id="fileInput" type="file" multiple aria-label="Select a building plan or resource pack"></div>
+        <button id="btnDemo">Demo house</button>
+        <button id="btnFit">Reset camera</button>
+      </div>
+      <!-- Deliberately no accept attribute: iOS/Android would otherwise hide .litematic/.schem/.schematic. Files are checked while reading. -->
+      <div class="dim" id="fileHint" style="margin-top:6px;font-size:12px">Supported: <b>.litematic</b> · <b>.schem</b> · <b>.schematic</b> · <b>.nbt</b> (Java Edition) · <b>.json</b><br>Resource pack: <b>.zip</b> / <b>.jar</b> · Drag &amp; drop works too.</div>
+      <div class="dim" style="margin-top:6px" id="modelInfo">No model loaded yet.</div>
+      <div class="row" style="margin-top:8px">
+        <div class="filebtn"><span class="btn" id="btnPack">Resource pack (.zip)…</span><input id="packInput" type="file" aria-label="Select a resource pack (.zip)"></div>
+        <button id="btnPackClear" class="danger" disabled>Remove pack</button>
+      </div>
+      <div class="dim" style="margin-top:6px" id="packInfo"></div>
+      <label class="dim" style="margin-top:6px"><input type="checkbox" id="chkCdn" checked> Use online assets (CDN) as a fallback</label>
+      <div class="dim" style="margin-top:6px" id="assetInfo"></div>
+    </div>
+
+    <div class="card" id="cardLive">
+      <h2>Live sync with Minecraft</h2>
+      <div class="row" style="flex-wrap:nowrap"><input type="text" id="liveCode" placeholder="Pairing code, e.g. AB12-CD34-EF56" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Pairing code"><button id="btnLive" class="primary" type="button">Connect</button></div>
+      <div class="dim" style="margin-top:6px">The command <b>/buildsync code</b> shows the code in game. The mod must be running (Minecraft open).</div>
+      <details id="liveAdv" style="margin-top:6px"><summary class="dim" style="cursor:pointer">Advanced: connect over my network</summary>
+        <div class="dim" style="margin-top:6px">For another device in your home network. On the PC type <b>/buildsync lan on</b> and <b>/buildsync lan confirm</b> in game, then enter the PC's address here. (Easier: open the address shown in game directly in the phone's browser.)</div>
+        <input type="text" id="liveHost" placeholder="PC address, e.g. 192.168.1.20:38517" autocomplete="off" spellcheck="false" aria-label="PC address in the home network" style="margin-top:6px;width:100%">
+      </details>
+      <div id="liveWarn" class="warnTxt" style="display:none;margin-top:6px">⚠ Network connection: not encrypted. Use it only on a network you trust.</div>
+      <div id="liveState" class="dim" style="margin-top:6px">Not connected.</div>
+      <div id="liveInfo" class="dim" style="margin-top:4px"></div>
+      <div id="livePlace" style="display:none;margin-top:10px">
+        <div class="dim" style="margin-bottom:6px"><b>Position of the building plan</b> – block coordinates (F3 screen). The corners are shown below, no counting needed.</div>
+        <div class="grid2" style="margin-bottom:6px"><span>Corner:</span>
+          <select id="plCorner"><option value="nw">North-west (smallest X and Z)</option><option value="ne">North-east (largest X, smallest Z)</option><option value="sw">South-west (smallest X, largest Z)</option><option value="se">South-east (largest X and Z)</option></select>
+          <span>Rotation:</span>
+          <select id="plRot"><option value="0">0° (as in the plan)</option><option value="1">90° clockwise</option><option value="2">180°</option><option value="3">270° clockwise</option></select></div>
+        <div class="grid3"><label>X<input type="number" id="plX" step="1" value="0"></label><label>Y (lowest layer)<input type="number" id="plY" step="1" value="64"></label><label>Z<input type="number" id="plZ" step="1" value="0"></label></div>
+        <div class="row" style="margin-top:6px"><button id="btnPlHere" type="button">Use my position</button>
+          <label class="dim"><input type="checkbox" id="plMir"> mirror (east↔west)</label></div>
+        <div id="plInfo" class="dim" style="margin-top:6px"></div>
+        <div class="row" style="margin-top:6px"><span class="dim">Preview surroundings:</span><input type="number" id="plMargin" min="0" max="24" step="1" value="12" style="width:64px"><span class="dim">blocks</span></div>
+        <div class="row" style="margin-top:8px"><button id="btnPv" type="button">Preview</button><button id="btnPlace" class="primary" type="button">Confirm &amp; start live</button></div>
+        <div id="plMsg" class="dim" style="margin-top:6px"></div>
+      </div>
+      <div id="liveRun" style="display:none;margin-top:10px">
+        <label class="dim"><input type="checkbox" id="chkHideFill"> Hide underground (current view only: shows e.g. cellars and tunnels on their own)</label>
+        <div class="row" style="margin-top:8px"><button id="btnSnap" type="button">Resync</button><button id="btnStop" type="button">End session</button><button id="btnForget" type="button" class="danger" title="Deletes the state the mod saved for this position">Discard state</button></div>
+      </div>
+    </div>
+
+    <div class="card progOnly" id="cardProgress">
+      <h2>Build progress</h2>
+      <div class="big" id="pct">0.0 %</div>
+      <div class="bar"><div id="bar"></div></div>
+      <div class="stats">
+        <div><b id="stDone">0</b><span class="dim">placed</span></div>
+        <div><b id="stLeft">0</b><span class="dim">remaining</span></div>
+        <div><b id="stTotal">0</b><span class="dim">total</span></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label><input type="checkbox" id="chkMark" checked> Click marks block</label>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <button id="btnUndo">↶ Undo</button>
+        <button id="btnReset" class="danger">Reset progress</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Layers (Y axis)</h2>
+      <div class="row between"><b id="layerLabel">–</b><span class="dim" id="layerStats"></span></div>
+      <input type="range" id="layerRange" min="0" max="0" value="0">
+      <div class="row">
+        <button id="btnDown">▼</button>
+        <button id="btnUp">▲</button>
+        <label><input type="checkbox" id="chkOnly"> this layer only</label>
+      </div>
+      <label class="toggle2d"><input type="checkbox" id="chk2d"> <span><b>2D view</b> (plan from above, selected layer only · key 2)</span></label>
+      <div class="row progOnly" style="margin-top:8px">
+        <button id="btnLayerDone">Layer ✔</button>
+        <button id="btnUpToDone">Everything up to here ✔</button>
+        <button id="btnLayerReset">Layer ✖</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Display</h2>
+      <div class="grid2">
+        <span>Still to build:</span>
+        <select id="selOpen">
+          <option value="normal">normal</option>
+          <option value="ghost">semi-transparent</option>
+          <option value="wire">wireframe</option>
+          <option value="hide">hidden</option>
+        </select>
+        <span>Already built:</span>
+        <select id="selDone">
+          <option value="tint">green tint</option>
+          <option value="normal">normal</option>
+          <option value="hide">hidden</option>
+        </select>
+      </div>
+      <label class="dim" style="margin-top:8px"><input type="checkbox" id="chkPhone"> Phone controls (classic orbit camera: drag = rotate, 2 fingers = pan/zoom)</label>
+      <label class="dim" style="margin-top:8px"><input type="checkbox" id="chkLock"> Hide mouse (key L, Esc also ends it): the mouse disappears completely, even over the menu</label>
+      <label class="dim" style="margin-top:8px"><input type="checkbox" id="chkHover"> Look without clicking (moving the mouse is enough; the first click captures the mouse)</label>
+      <div class="dim" style="margin-top:8px">Look sensitivity: <b id="sensVal">1.0×</b></div>
+      <input type="range" id="rngSens" min="0.2" max="3" step="0.05" value="1">
+      <label class="dim" style="margin-top:8px"><input type="checkbox" id="chkDouble"> Show back faces (render everything double-sided)</label>
+      <div class="dim" style="margin-top:8px">Mipmap levels (like Minecraft: higher = calmer in the distance, 0 = off)</div>
+      <select id="selMip" style="width:100%"><option value="0">Off (0)</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4 (Minecraft default)</option></select>
+      <div class="dim" style="margin-top:8px">Transparency (glass, water, ice)</div>
+      <select id="selTrans" style="width:100%"><option value="blend">See-through (blending)</option><option value="solid">Compatible (opaque, no blending)</option></select>
+    </div>
+
+    <div class="card">
+      <h2>Material list <span class="dim" style="text-transform:none">(click = show only this type)</span></h2>
+      <div id="matList"></div>
+    </div>
+  </aside>
+</div>
+<div id="drop">Drop a building plan (.litematic/.schem/.schematic/.nbt) and/or a resource pack (.zip) here</div>
+
+<script>
+/* Loader without an import map: also works with file://, in the Files app/WebView and in older Safari versions.
+   Libraries are fetched from several CDNs; if something fails, the exact reason is shown on screen. */
+(function(){
+  var CDN={
+    three:['https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js','https://unpkg.com/three@0.160.0/build/three.module.js'],
+    controls:['https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js','https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js'],
+    jszip:['https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js','https://unpkg.com/jszip@3.10.1/dist/jszip.min.js','https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'],
+    pako:['https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js','https://unpkg.com/pako@2.1.0/dist/pako.min.js','https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.2/pako.min.js']
+  };
+  function $(id){ return document.getElementById(id); }
+  var shown=false;
+  function fail(err,title){
+    var b=$('boot'); if(!b) return; shown=true; b.style.display='flex'; b.className='err';
+    var msg=(err&&err.message)?err.message:String(err);
+    $('bootT').textContent=title||'The application could not start';
+    $('bootM').innerHTML='<pre></pre><div>Page: <code></code><br>Browser: <code></code></div><button type="button" id="bootR">Reload</button>';
+    var p=$('bootM').getElementsByTagName('pre')[0]; p.textContent=msg;
+    var c=$('bootM').getElementsByTagName('code'); c[0].textContent=location.protocol+'//'+(location.host||'(local file)'); c[1].textContent=navigator.userAgent;
+    $('bootR').onclick=function(){ location.reload(); };
+  }
+  function ready(){ if(shown) return; var b=$('boot'); if(b) b.style.display='none'; }
+  window.addEventListener('error',function(e){ if(!$('boot')||$('boot').style.display==='none') return; fail(e.error||e.message,'Startup error'); });
+  window.addEventListener('unhandledrejection',function(e){ if(!$('boot')||$('boot').style.display==='none') return; fail(e.reason,'Startup error'); });
+  function fetchText(urls){
+    var i=0, errs=[];
+    function next(){
+      if(i>=urls.length) return Promise.reject(new Error('Download failed ('+errs.join('; ')+')'));
+      var u=urls[i++];
+      return fetch(u).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); }).catch(function(e){ errs.push(u.split('/')[2]+': '+(e&&e.message||e)); return next(); });
+    }
+    return next();
+  }
+  /* No ES module import (blocked in some WebViews/local files: "Importing a module script failed").
+     Instead the three.js source is fetched and converted into a classic script:
+     "export { … }" -> "return { … }", OrbitControls: "import … from 'three'" -> assignment from the three object. */
+  function runClassic(code){
+    var sc=document.createElement('script'); sc.text=code; document.head.appendChild(sc); document.head.removeChild(sc);
+  }
+  function convertThree(src){
+    var k=src.lastIndexOf('export {'); if(k<0) throw new Error('three.js has an unexpected format (no export block)');
+    var end=src.indexOf('}',k), list=src.slice(k+8,end).split(',').map(function(x){ return x.trim(); }).filter(Boolean);
+    var pairs=list.map(function(n){ var m=n.split(/\s+as\s+/); return (m[1]||m[0])+':'+m[0]; });
+    return 'window.__MCB_T=(function(){"use strict";\n'+src.slice(0,k)+'\nreturn {'+pairs.join(',')+'};})();';
+  }
+  function convertControls(src){
+    var m=/import\s*\{([^}]*)\}\s*from\s*['"]three['"]\s*;?/.exec(src); if(!m) throw new Error('OrbitControls has an unexpected format (no import)');
+    var k=src.lastIndexOf('export {'); if(k<0) throw new Error('OrbitControls has an unexpected format (no export)');
+    var body=src.slice(0,m.index)+'var {'+m[1].replace(/\s+as\s+/g,':')+'}=T;'+src.slice(m.index+m[0].length,k);
+    return 'window.__MCB_O=(function(T){"use strict";\n'+body+'\nreturn OrbitControls;})(window.__MCB_T);';
+  }
+  function loadThree(){
+    return fetchText(CDN.three).then(function(src){
+      runClassic(convertThree(src));
+      if(!window.__MCB_T||!window.__MCB_T.WebGLRenderer) throw new Error('three.js was not initialised correctly');
+      return fetchText(CDN.controls);
+    }).then(function(oc){
+      runClassic(convertControls(oc));
+      if(!window.__MCB_O) throw new Error('OrbitControls were not initialised');
+      return {THREE:window.__MCB_T,OrbitControls:window.__MCB_O};
+    }).catch(function(e){
+      throw new Error('three.js could not be loaded.\n'+(e&&e.message||e)+'\n\nPlease check your internet connection (only needed on the first start) or disable content blockers/VPN.');
+    });
+  }
+  function umd(global,urls){
+    if(window[global]) return Promise.resolve(window[global]);
+    var i=0;
+    return new Promise(function(res,rej){
+      (function next(){
+        if(i>=urls.length) return rej(new Error(global+' could not be loaded'));
+        var sc=document.createElement('script'); sc.src=urls[i++]; sc.onload=function(){ window[global]?res(window[global]):next(); }; sc.onerror=function(){ next(); }; document.head.appendChild(sc);
+      })();
+    });
+  }
+  window.MCB={CDN:CDN,fail:fail,ready:ready,libs:loadThree,umd:umd,fetchText:fetchText};
+})();
+</script>
+<script>
+(async function(){
+'use strict';
+var THREE, OrbitControls;
+try{ var L=await window.MCB.libs(); THREE=L.THREE; OrbitControls=L.OrbitControls; }
+catch(e){ window.MCB.fail(e,'Libraries could not be loaded'); return; }
+
+const $ = id => document.getElementById(id);
+
+//#PURE-START
+/* ====================================================================
+   NBT parser (big-endian)
+   ==================================================================== */
+class NBTReader {
+  constructor(u8){ this.u8=u8; this.dv=new DataView(u8.buffer,u8.byteOffset,u8.byteLength); this.pos=0; this.td=new TextDecoder(); }
+  str(){ const len=this.dv.getUint16(this.pos); this.pos+=2; const s=this.td.decode(this.u8.subarray(this.pos,this.pos+len)); this.pos+=len; return s; }
+  tag(type){
+    const dv=this.dv;
+    switch(type){
+      case 1: return dv.getInt8(this.pos++);
+      case 2: { const v=dv.getInt16(this.pos); this.pos+=2; return v; }
+      case 3: { const v=dv.getInt32(this.pos); this.pos+=4; return v; }
+      case 4: { const v=Number(dv.getBigInt64(this.pos)); this.pos+=8; return v; }
+      case 5: { const v=dv.getFloat32(this.pos); this.pos+=4; return v; }
+      case 6: { const v=dv.getFloat64(this.pos); this.pos+=8; return v; }
+      case 7: { const len=dv.getInt32(this.pos); this.pos+=4; const a=this.u8.subarray(this.pos,this.pos+len); this.pos+=len; return a; }
+      case 8: return this.str();
+      case 9: { const it=this.u8[this.pos++]; const len=dv.getInt32(this.pos); this.pos+=4; const a=new Array(len); for(let i=0;i<len;i++)a[i]=this.tag(it); return a; }
+      case 10: { const o={}; for(;;){ const t=this.u8[this.pos++]; if(t===0)break; const k=this.str(); o[k]=this.tag(t); } return o; }
+      case 11: { const len=dv.getInt32(this.pos); this.pos+=4; const a=new Int32Array(len); for(let i=0;i<len;i++){a[i]=dv.getInt32(this.pos);this.pos+=4;} return a; }
+      case 12: { // long array as 32-bit words (low word first) -> convenient for packed bit streams
+        const len=dv.getInt32(this.pos); this.pos+=4; const w=new Uint32Array(len*2);
+        for(let i=0;i<len;i++){ const hi=dv.getUint32(this.pos), lo=dv.getUint32(this.pos+4); this.pos+=8; w[2*i]=lo; w[2*i+1]=hi; }
+        return w; }
+      default: throw new Error('Unknown NBT tag '+type);
+    }
+  }
+  root(){ const t=this.u8[this.pos++]; if(t!==10) throw new Error('Not a valid (Java) NBT file'); this.str(); return this.tag(10); }
+}
+
+/* ====================================================================
+   Block states, builder, loader
+   ==================================================================== */
+const AIR=/^(minecraft:)?(air|cave_air|void_air|structure_void)(\[|$)/;
+function parseState(str){
+  const k=str.indexOf('['); const name=(k<0?str:str.slice(0,k)).replace(/^minecraft:/,''); const props={};
+  if(k>=0){ str.slice(k+1,str.lastIndexOf(']')).split(',').forEach(p=>{ const e=p.indexOf('='); if(e>0) props[p.slice(0,e).trim()]=p.slice(e+1).trim(); }); }
+  return {name,props};
+}
+class Builder{
+  constructor(){ this.states=[]; this.air=[]; this.map=new Map(); this.x=[]; this.y=[]; this.z=[]; this.s=[]; }
+  state(str){ let i=this.map.get(str); if(i===undefined){ i=this.states.length; this.states.push(str); this.air.push(AIR.test(str)); this.map.set(str,i);} return i; }
+  add(x,y,z,s){ if(s===undefined||this.air[s])return; this.x.push(x);this.y.push(y);this.z.push(z);this.s.push(s); }
+}
+function stateString(e){
+  const name=e.Name||e.name||'minecraft:air'; const p=e.Properties||e.properties;
+  if(p){ const k=Object.keys(p); if(k.length) return name+'['+k.map(a=>a+'='+p[a]).join(',')+']'; }
+  return name;
+}
+function loadLitematic(root){
+  const b=new Builder();
+  for(const rn in root.Regions){
+    const r=root.Regions[rn];
+    const sx=r.Size.x, sy=r.Size.y, sz=r.Size.z;
+    const ax=Math.abs(sx), ay=Math.abs(sy), az=Math.abs(sz);
+    const ox=r.Position.x+(sx<0?sx+1:0), oy=r.Position.y+(sy<0?sy+1:0), oz=r.Position.z+(sz<0?sz+1:0);
+    const pal=r.BlockStatePalette.map(stateString);
+    const pm=pal.map(s=>b.state(s));
+    const bits=Math.max(2,Math.ceil(Math.log2(pal.length)));
+    const mask=(1<<bits)-1, w=r.BlockStates, total=ax*ay*az, layerSize=ax*az;
+    for(let i=0;i<total;i++){
+      const p=i*bits, wi=Math.floor(p/32), off=p%32;
+      let v=w[wi]>>>off;
+      if(off+bits>32) v|=(w[wi+1]||0)<<(32-off);
+      v&=mask;
+      const idx=pm[v]; if(idx===undefined||b.air[idx]) continue;
+      const y=Math.floor(i/layerSize), rem=i-y*layerSize, z=Math.floor(rem/ax), x=rem-z*ax;
+      b.add(ox+x,oy+y,oz+z,idx);
+    }
+  }
+  return b;
+}
+function loadSponge(root){
+  const s=root.Schematic||root; const W=s.Width,H=s.Height,L=s.Length;
+  let pal,data; if(s.Blocks&&s.Blocks.Palette){pal=s.Blocks.Palette;data=s.Blocks.Data;}else{pal=s.Palette;data=s.BlockData;}
+  const b=new Builder(); const pm=[];
+  for(const k in pal) pm[pal[k]]=b.state(k);
+  let pos=0;
+  for(let i=0;i<W*H*L;i++){
+    let v=0,sh=0,by; do{ by=data[pos++]; v|=(by&0x7f)<<sh; sh+=7; }while(by&0x80);
+    const y=Math.floor(i/(W*L)), rem=i-y*W*L, z=Math.floor(rem/W), x=rem-z*W;
+    b.add(x,y,z,pm[v]);
+  }
+  return b;
+}
+function loadStructure(root){
+  const b=new Builder(); const pal=(root.palette||(root.palettes&&root.palettes[0])||[]).map(e=>b.state(stateString(e)));
+  for(const bl of root.blocks){ b.add(bl.pos[0],bl.pos[1],bl.pos[2],pal[bl.state]); }
+  return b;
+}
+const DYES=['white','orange','magenta','light_blue','yellow','lime','pink','gray','light_gray','cyan','purple','blue','brown','green','red','black'];
+const PLK=['oak','spruce','birch','jungle','acacia','dark_oak'];
+const FACING4=['east','west','south','north'];
+const STAIR_IDS=new Set([53,67,108,109,114,128,134,135,136,156,163,164,180,203]);
+const LEG={1:'stone',2:'grass_block',3:'dirt',4:'cobblestone',7:'bedrock',8:'water',9:'water',10:'lava',11:'lava',12:'sand',13:'gravel',14:'gold_ore',15:'iron_ore',16:'coal_ore',18:'oak_leaves',20:'glass',21:'lapis_ore',22:'lapis_block',24:'sandstone',41:'gold_block',42:'iron_block',45:'bricks',47:'bookshelf',48:'mossy_cobblestone',49:'obsidian',50:'torch',53:'oak_stairs',54:'chest',56:'diamond_ore',57:'diamond_block',58:'crafting_table',61:'furnace',65:'ladder',67:'cobblestone_stairs',79:'ice',80:'snow_block',82:'clay',85:'oak_fence',86:'pumpkin',87:'netherrack',89:'glowstone',98:'stone_bricks',101:'iron_bars',102:'glass_pane',108:'brick_stairs',109:'stone_brick_stairs',112:'nether_bricks',113:'nether_brick_fence',114:'nether_brick_stairs',128:'sandstone_stairs',133:'emerald_block',134:'spruce_stairs',135:'birch_stairs',136:'jungle_stairs',155:'quartz_block',156:'quartz_stairs',163:'acacia_stairs',164:'dark_oak_stairs',170:'hay_block',172:'terracotta',173:'coal_block',174:'packed_ice',180:'red_sandstone_stairs',188:'spruce_fence',189:'birch_fence',190:'jungle_fence',191:'dark_oak_fence',192:'acacia_fence',201:'purpur_block',203:'purpur_stairs'};
+const LEG_DOORS={64:'oak_door',71:'iron_door',193:'spruce_door',194:'birch_door',195:'jungle_door',196:'acacia_door',197:'dark_oak_door'};
+function legacyName(id,d){
+  switch(id){
+    case 5: return (PLK[d&7]||'oak')+'_planks';
+    case 17: return ['oak','spruce','birch','jungle'][d&3]+'_log';
+    case 162: return ['acacia','dark_oak'][d&1]+'_log';
+    case 1: return ['stone','granite','polished_granite','diorite','polished_diorite','andesite','polished_andesite'][d]||'stone';
+    case 35: return DYES[d&15]+'_wool';
+    case 95: return DYES[d&15]+'_stained_glass';
+    case 159: return DYES[d&15]+'_terracotta';
+    case 160: return DYES[d&15]+'_stained_glass_pane';
+    case 171: return DYES[d&15]+'_carpet';
+    case 139: return (d&1)?'mossy_cobblestone_wall':'cobblestone_wall';
+    case 43: return 'stone_slab[type=double]';
+    case 44: return 'stone_slab[type='+((d&8)?'top':'bottom')+']';
+    case 126: return (PLK[d&7]||'oak')+'_slab[type='+((d&8)?'top':'bottom')+']';
+    case 125: return (PLK[d&7]||'oak')+'_planks';
+    case 96: return 'oak_trapdoor[facing='+['north','south','west','east'][d&3]+',open='+((d&4)?'true':'false')+',half='+((d&8)?'top':'bottom')+']';
+    case 167: return 'iron_trapdoor[facing='+['north','south','west','east'][d&3]+',open='+((d&4)?'true':'false')+',half='+((d&8)?'top':'bottom')+']';
+  }
+  if(LEG_DOORS[id]){ return (d&8)?LEG_DOORS[id]+'[half=upper,hinge='+((d&1)?'right':'left')+']':LEG_DOORS[id]+'[half=lower,facing='+['east','south','west','north'][d&3]+',open='+((d&4)?'true':'false')+']'; }
+  const nm=LEG[id]||('legacy_id_'+id);
+  if(STAIR_IDS.has(id)) return nm+'[facing='+FACING4[d&3]+',half='+((d&4)?'top':'bottom')+']';
+  return nm;
+}
+function loadLegacy(root){
+  const W=root.Width,H=root.Height,L=root.Length,B=root.Blocks,D=root.Data,A=root.AddBlocks; const b=new Builder();
+  for(let i=0;i<W*H*L;i++){
+    let id=B[i]; if(A) id|=(((i&1)?(A[i>>1]>>4):(A[i>>1]))&15)<<8;
+    if(id===0) continue;
+    const y=Math.floor(i/(W*L)), rem=i-y*W*L, z=Math.floor(rem/W), x=rem-z*W;
+    b.add(x,y,z,b.state(legacyName(id,D?D[i]&15:0)));
+  }
+  return b;
+}
+function loadJSON(text){
+  const j=JSON.parse(text); const arr=Array.isArray(j)?j:(j.blocks||j.Blocks);
+  if(!Array.isArray(arr)) throw new Error('JSON: expected an array or {"blocks":[...]}');
+  const b=new Builder(); const pal=j.palette||j.Palette;
+  for(const e of arr){
+    let x,y,z,nm;
+    if(Array.isArray(e)){ [x,y,z,nm]=e; }
+    else { x=e.x??(e.pos&&e.pos[0]); y=e.y??(e.pos&&e.pos[1]); z=e.z??(e.pos&&e.pos[2]); nm=e.block??e.name??e.type??e.id??e.Name;
+      if(nm===undefined&&e.state!==undefined&&pal){ nm=pal[e.state]; if(nm&&typeof nm==='object') nm=stateString(nm); } }
+    if(typeof nm==='object'&&nm) nm=stateString(nm);
+    if(typeof nm!=='string'||x===undefined) continue;
+    b.add(x,y,z,b.state(nm));
+  }
+  return b;
+}
+function parseRoot(root){
+  if(root.Regions) return loadLitematic(root);
+  if(root.palette&&root.blocks||root.palettes) return loadStructure(root);
+  if(root.Schematic||root.BlockData||(root.Palette&&!root.Blocks)) return loadSponge(root);
+  if(root.Blocks) return loadLegacy(root);
+  throw new Error('Unknown NBT format (supported: .litematic, .schem, .schematic, .nbt – Java Edition)');
+}
+function finalize(b,name,box){
+  const n=b.x.length; if(!n) throw new Error('The model contains no blocks (air only?).');
+  let x0=1e9,y0=1e9,z0=1e9,x1=-1e9,y1=-1e9,z1=-1e9;
+  for(let i=0;i<n;i++){ const x=b.x[i],y=b.y[i],z=b.z[i]; if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;if(z<z0)z0=z;if(z>z1)z1=z; }
+  if(box){ x0=y0=z0=0; x1=box[0]-1; y1=box[1]-1; z1=box[2]-1; }   // fixed bounds (live view: coordinates = box coordinates)
+  const stInfo=b.states.map(parseState);
+  const tmap=new Map(), types=[];
+  const stType=stInfo.map((si,idx)=>{ if(b.air[idx])return -1; let t=tmap.get(si.name);
+    if(t===undefined){ t=types.length; tmap.set(si.name,t); types.push({name:si.name,count:0,done:0}); } return t; });
+  const X=new Int32Array(n),Y=new Int32Array(n),Z=new Int32Array(n),T=new Uint16Array(n),SI=new Uint32Array(n);
+  for(let i=0;i<n;i++){ X[i]=b.x[i]-x0;Y[i]=b.y[i]-y0;Z[i]=b.z[i]-z0; const s=b.s[i]; SI[i]=s; const t=stType[s]; T[i]=t; types[t].count++; }
+  return {name,n,w:x1-x0+1,h:y1-y0+1,d:z1-z0+1,X,Y,Z,T,SI,types,stInfo,states:b.states};
+}
+function demoModel(){
+  const b=new Builder(), S=n=>b.state('minecraft:'+n), W=11, D=9;
+  const planks=S('oak_planks'), brick=S('stone_bricks'), log=S('oak_log[axis=y]'), glass=S('glass_pane'), roof=S('spruce_planks'), cob=S('cobblestone');
+  const stairN=S('spruce_stairs[facing=north,half=bottom,shape=straight]'), stairS=S('spruce_stairs[facing=south,half=bottom,shape=straight]');
+  const slab=S('stone_brick_slab[type=bottom]'), tbl=S('crafting_table'), shelf=S('bookshelf'), carpet=S('red_carpet');
+  const doorL=S('oak_door[facing=south,half=lower,hinge=left,open=false]'), doorU=S('oak_door[facing=south,half=upper,hinge=left,open=false]');
+  const fence=S('oak_fence'), torch=S('torch'), grass=S('grass_block'), lantern=S('glowstone');
+  for(let x=-2;x<W+2;x++)for(let z=-2;z<D+2;z++) b.add(x,-1,z,grass);
+  for(let x=0;x<W;x++)for(let z=0;z<D;z++) b.add(x,0,z,(x%3===0&&z%3===0)?cob:planks);
+  for(let y=1;y<=3;y++)for(let x=0;x<W;x++)for(let z=0;z<D;z++){
+    if(x!==0&&x!==W-1&&z!==0&&z!==D-1) continue;
+    const corner=(x===0||x===W-1)&&(z===0||z===D-1);
+    if(!corner&&z===0&&x===5&&y<=2) continue;
+    const win=y===2&&((z===0||z===D-1)&&(x===3||x===7)||(x===0||x===W-1)&&z===4);
+    b.add(x,y,z,corner?log:win?glass:brick);
+  }
+  b.add(5,1,0,doorL); b.add(5,2,0,doorU);
+  for(let k=0;k<=4;k++){
+    const y=4+k;
+    for(let x=0;x<W;x++){ /* gable roof: stairs along X */ }
+    for(let z=-1;z<=D;z++){ b.add(k-1,y,z,S('spruce_stairs[facing=east,half=bottom,shape=straight]')); b.add(W-k,y,z,S('spruce_stairs[facing=west,half=bottom,shape=straight]')); }
+    for(const z of [0,D-1]) for(let x=k;x<=W-1-k;x++) b.add(x,y,z,brick);
+  }
+  for(let z=-1;z<=D;z++) b.add(5,9,z,slab);
+  b.add(1,1,1,tbl); b.add(9,1,1,shelf); b.add(9,2,1,shelf); b.add(9,1,2,shelf);
+  for(let x=3;x<=7;x++) for(let z=3;z<=5;z++) b.add(x,1,z,carpet);
+  for(let z=-4;z<=-2;z++){ b.add(4,0,z,fence); b.add(6,0,z,fence); }
+  b.add(4,1,-2,torch); b.add(6,1,-2,lantern); b.add(5,3,1,lantern);
+  void stairN; void stairS;
+  return finalize(b,'Demo house');
+}
+
+/* ====================================================================
+   Colours + substitute textures (only if the CDN is not reachable)
+   ==================================================================== */
+const WOOD={oak:'#a2824d',spruce:'#755831',birch:'#c8b77a',jungle:'#a0714f',acacia:'#a95d32',dark_oak:'#432b14',mangrove:'#773a36',cherry:'#e4b4ae',bamboo:'#c3a93b',crimson:'#7e3a56',warped:'#2b6f68',pale_oak:'#e3d8d3'};
+const DYE={white:'#e9ecec',orange:'#f07613',magenta:'#bd44b3',light_blue:'#3aafd9',yellow:'#f8c527',lime:'#70b919',pink:'#ed8dac',gray:'#3e4447',light_gray:'#8e8e86',cyan:'#158991',purple:'#792aac',blue:'#35399d',brown:'#724728',green:'#546d1b',red:'#a12722',black:'#141519'};
+const BASE={stone:'#7d7d7d',granite:'#955f4b',diorite:'#bdbdbd',andesite:'#868686',deepslate:'#4d4d51',cobblestone:'#7a7a7a',mossy_cobblestone:'#6b7f5c',dirt:'#866043',coarse_dirt:'#77553b',podzol:'#5b4020',mud:'#3c383d',grass_block:'#5d9c3a',sand:'#dbcf9b',red_sand:'#a95821',gravel:'#837f7e',clay:'#a0a6b3',sandstone:'#dfd3a0',red_sandstone:'#b5601f',stone_bricks:'#797979',mossy_stone_bricks:'#6e7d62',bricks:'#96574a',nether_bricks:'#2c161a',netherrack:'#6f3535',blackstone:'#2a2429',basalt:'#4a4a50',obsidian:'#14101f',bedrock:'#555555',water:'#3a5fd9',lava:'#d9640f',glass:'#c0e8ef',ice:'#8fb4ff',packed_ice:'#8aa8e8',blue_ice:'#74a8f5',snow_block:'#f8fdfd',glowstone:'#f0c870',sea_lantern:'#cfe5dc',quartz_block:'#ebe5de',iron_block:'#d8d8d8',gold_block:'#f5d83a',diamond_block:'#5ee0d6',emerald_block:'#2ecc5b',lapis_block:'#2b4ea0',coal_block:'#161616',copper_block:'#c06a4b',prismarine:'#63a596',terracotta:'#985f45',bookshelf:'#6f5a38',crafting_table:'#8a5e33',furnace:'#6f6f6f',hay_block:'#c7a313',pumpkin:'#c47a12',melon:'#7a9a2b',tnt:'#c33b2f',end_stone:'#dfe2a8',purpur_block:'#a77aa7',amethyst_block:'#8d63c9',tuff:'#6d6d64',calcite:'#e0e0da',oak_leaves:'#3f7f2a',torch:'#f5c342',iron_bars:'#8a8f94'};
+const DYE_KEYS=Object.keys(DYE).sort((a,b)=>b.length-a.length);
+const KEYWORDS=[[/deepslate/,'#4d4d51'],[/blackstone/,'#2a2429'],[/tuff/,'#6d6d64'],[/calcite/,'#e0e0da'],[/andesite/,'#868686'],[/diorite/,'#bdbdbd'],[/granite/,'#955f4b'],[/copper/,'#c06a4b'],[/quartz/,'#ebe5de'],[/prismarine/,'#63a596'],[/terracotta/,'#985f45'],[/leaves/,'#3f7f2a'],[/glass/,'#c0e8ef'],[/ice/,'#8fb4ff'],[/snow/,'#f8fdfd'],[/sandstone/,'#dfd3a0'],[/sand/,'#dbcf9b'],[/end_stone/,'#dfe2a8'],[/nether|crimson/,'#6f3535'],[/purpur/,'#a77aa7'],[/amethyst/,'#8d63c9'],[/lantern|torch|candle|lamp|glow|light/,'#f0c870'],[/chest|barrel/,'#8a5e33'],[/iron/,'#d8d8d8'],[/gold/,'#f5d83a'],[/diamond/,'#5ee0d6'],[/grass|fern|vine|moss|azalea/,'#5d9c3a'],[/dirt|mud/,'#866043'],[/ore|stone|rock/,'#7d7d7d']];
+const SUFFIX=/_(stairs|slab|wall|fence_gate|fence|button|pressure_plate|trapdoor|door|wall_sign|hanging_sign|sign)$/;
+function hash(str){ let h=2166136261; for(let i=0;i<str.length;i++) h=Math.imul(h^str.charCodeAt(i),16777619); return h>>>0; }
+function rng(seed){ let s=seed>>>0; return ()=>{ s=(Math.imul(s,1664525)+1013904223)>>>0; return s/4294967296; }; }
+function rgbOf(hex){ const v=parseInt(hex.slice(1),16); return [v>>16&255,v>>8&255,v&255]; }
+function hex(r,g,b){ return '#'+[r,g,b].map(v=>Math.max(0,Math.min(255,v|0)).toString(16).padStart(2,'0')).join(''); }
+function colorFor(name){
+  if(BASE[name]) return BASE[name];
+  let b=name.replace(SUFFIX,'');
+  if(BASE[b]) return BASE[b]; if(BASE[b+'s']) return BASE[b+'s'];
+  for(const w in WOOD){
+    if(b===w||b.startsWith(w+'_')){
+      if(/leaves/.test(b)) return w==='cherry'?'#e8a8c0':'#3f7f2a';
+      const c=rgbOf(WOOD[w]);
+      if(/(^|_)(log|stem|wood|hyphae)$/.test(b)) return hex(c[0]*.72,c[1]*.72,c[2]*.72);
+      return WOOD[w];
+    }
+  }
+  for(const d of DYE_KEYS) if(b.startsWith(d+'_')) return DYE[d];
+  for(const [re,c] of KEYWORDS) if(re.test(b)) return c;
+  const h=hash(name); const r=rng(h); return hex(90+r()*140,90+r()*140,90+r()*140);
+}
+function styleOf(b){
+  if(/glass|^ice$|^blue_ice$/.test(b)) return 'glass';
+  if(/(^|_)(log|stem)$/.test(b)) return 'log';
+  if(/leaves/.test(b)) return 'leaves';
+  if(/brick/.test(b)) return 'bricks';
+  if(/planks/.test(b)||WOOD[b]) return 'planks';
+  return 'noise';
+}
+const PAINT={
+  noise:(c,r)=>(x,y)=>{const d=(r()-.5)*28;return [c[0]+d,c[1]+d,c[2]+d,255];},
+  bricks:(c,r)=>(x,y)=>{const row=y>>2; const mortar=(y&3)===3||((x+(row&1)*4)&7)===7; if(mortar) return [185,182,175,255]; const d=(r()-.5)*22; return [c[0]+d,c[1]+d,c[2]+d,255];},
+  planks:(c,r)=>(x,y)=>{const d=(r()-.5)*14; const f=((y&3)===3)?.78:1; return [c[0]*f+d,c[1]*f+d,c[2]*f+d,255];},
+  log:(c,r)=>{const col=[];for(let i=0;i<16;i++)col.push((r()-.5)*34);return (x,y)=>{const d=col[x]+(r()-.5)*10;return [c[0]+d,c[1]+d,c[2]+d,255];};},
+  glass:(c,r)=>(x,y)=>{ if(x===0||y===0||x===15||y===15) return [235,248,250,230]; if(r()<.04) return [255,255,255,170]; return [c[0],c[1],c[2],70]; },
+  leaves:(c,r)=>(x,y)=>{const d=(r()-.5)*40; const dk=r()<.2?.6:1; return [(c[0]+d)*dk,(c[1]+d)*dk,(c[2]+d)*dk,255];}
+};
+/** Returns 16x16 RGBA pixels of a procedural substitute texture */
+function procTilePixels(name){
+  const out=new Uint8ClampedArray(16*16*4); if(/_overlay$/.test(name)) return out;
+  const r=rng(hash(name)); let p;
+  if(name==='grass_block_side'){
+    const g=rgbOf(BASE.grass_block), d=rgbOf(BASE.dirt);
+    p=(x,y)=>{ const n=(r()-.5)*30, c=(y<3||(y<5&&r()<.4))?g:d; return [c[0]+n,c[1]+n,c[2]+n,255]; };
+  } else {
+    const base=name.replace(/_(top|side|bottom|front|back|end|still|flow)$/,'');
+    p=(PAINT[styleOf(base)]||PAINT.noise)(rgbOf(colorFor(base)),r);
+  }
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++){ const c=p(x,y); const o=(y*16+x)*4; out[o]=c[0];out[o+1]=c[1];out[o+2]=c[2];out[o+3]=c[3]; }
+  return out;
+}
+function tintFor(name){
+  if(/^(grass_block|short_grass|tall_grass|grass|fern|large_fern|sugar_cane)$/.test(name)) return [145,189,89];
+  if(name==='spruce_leaves') return [97,153,97];
+  if(name==='birch_leaves') return [128,167,85];
+  if(/^(oak|jungle|acacia|dark_oak|mangrove)_leaves$|^vine$/.test(name)) return [119,171,47];
+  if(name==='water') return [63,118,228];
+  if(name==='lily_pad') return [32,128,48];
+  return null;
+}
+
+/* ====================================================================
+   Blockstates + models (vanilla JSON from minecraft-assets)
+   ==================================================================== */
+const PROP_DEFAULTS={shape:'straight',half:'bottom',type:'bottom',open:'false',hinge:'left',powered:'false',waterlogged:'false',axis:'y',facing:'north',up:'false',north:'false',east:'false',south:'false',west:'false',lit:'false',snowy:'false',persistent:'false',distance:'7',age:'0',layers:'1',face:'wall',attached:'false',in_wall:'false',occupied:'false',part:'foot',bottom:'false'};
+function propVal(props,k){ return k in props ? props[k] : PROP_DEFAULTS[k]; }
+function variantMismatch(props,key){
+  if(key===''||key==='normal') return 0; let bad=0;
+  for(const pair of key.split(',')){ const e=pair.indexOf('='); if(e<0) continue; const k=pair.slice(0,e), v=pair.slice(e+1); const have=propVal(props,k); if(have===undefined||String(have)!==v) bad++; }
+  return bad;
+}
+function whenOk(props,when){
+  if(when.OR) return when.OR.some(w=>whenOk(props,w));
+  if(when.AND) return when.AND.every(w=>whenOk(props,w));
+  for(const k in when){ const have=propVal(props,k); if(have===undefined) return false; if(!String(when[k]).split('|').includes(String(have))) return false; }
+  return true;
+}
+const first=v=>Array.isArray(v)?v[0]:v;
+/** Picks the model references {model,x,y} to apply for a block state */
+function pickModelRefs(def,props){
+  if(def.variants){
+    let best=null,bs=1e9;
+    for(const k in def.variants){ const s=variantMismatch(props,k); if(s<bs){ bs=s; best=def.variants[k]; if(s===0) break; } }
+    return best?[first(best)]:[];
+  }
+  if(def.multipart){ const out=[]; for(const part of def.multipart){ if(!part.when||whenOk(props,part.when)) out.push(first(part.apply)); } return out; }
+  return [];
+}
+const CUBE_FACES=()=>({down:{texture:'#down',cullface:'down'},up:{texture:'#up',cullface:'up'},north:{texture:'#north',cullface:'north'},south:{texture:'#south',cullface:'south'},west:{texture:'#west',cullface:'west'},east:{texture:'#east',cullface:'east'}});
+function builtinModel(s){
+  const n=s.replace(/^block\//,'');
+  const el=[{from:[0,0,0],to:[16,16,16],faces:CUBE_FACES()}];
+  if(n==='cube') return {textures:{},elements:el};
+  if(n==='cube_all') return {textures:{particle:'#all',down:'#all',up:'#all',north:'#all',south:'#all',west:'#all',east:'#all'},elements:el};
+  if(n==='cube_column') return {textures:{down:'#end',up:'#end',north:'#side',south:'#side',west:'#side',east:'#side'},elements:el};
+  if(n==='cube_bottom_top') return {textures:{down:'#bottom',up:'#top',north:'#side',south:'#side',west:'#side',east:'#side'},elements:el};
+  if(n==='cube_top') return {textures:{down:'#side',up:'#top',north:'#side',south:'#side',west:'#side',east:'#side'},elements:el};
+  return null;
+}
+function canonModelKey(k){ return String(k).replace(/^minecraft:/,'').replace(/^block\//,''); }
+function lookupModel(models,name){ return models[canonModelKey(name)]||null; }
+/** Merges CDN data and resource pack; the pack overrides the CDN */
+function mergeAssets(cdn,pack){
+  if(!cdn&&!pack) return null;
+  const states=Object.create(null), models=Object.create(null);
+  for(const src of [cdn,pack]){ if(!src) continue; for(const k in src.states) states[k]=src.states[k]; for(const k in src.models) models[canonModelKey(k)]=src.models[k]; }
+  return {states,models};
+}
+function resolveModel(models,name,depth=0){
+  if(depth>12) return null;
+  const s=String(name).replace(/^minecraft:/,'');
+  if(s==='builtin/entity') return {textures:{},elements:null,entity:true};
+  if(s==='builtin/generated'||s==='builtin/missing') return {textures:{},elements:null,entity:true};
+  const m=lookupModel(models,name);
+  if(!m) return builtinModel(s);
+  const base=m.parent?resolveModel(models,m.parent,depth+1):null;
+  const elements=m.elements||(base&&base.elements)||null;
+  return {textures:Object.assign({},base&&base.textures,m.textures),elements,entity:!elements&&!!(base&&base.entity)};
+}
+/** Resolve a texture reference. Newer Minecraft versions (26.x) allow an object {sprite:"…", force_translucent:true} instead of a string */
+function resolveTex(ref,textures){
+  let r=ref;
+  for(let i=0;i<12;i++){
+    if(r&&typeof r==='object') r=r.sprite||r.texture||r.id||null;
+    if(typeof r==='string'&&r[0]==='#') r=textures[r.slice(1)]; else break;
+  }
+  if(r&&typeof r==='object') r=r.sprite||r.texture||r.id||null;
+  return (typeof r==='string'&&r[0]!=='#')?r:null;
+}
+const texKey=t=>t.replace(/^minecraft:/,'').replace(/^block\//,'');
+
+/* ---------- Rotations (vanilla convention) ---------- */
+const DIRN=['down','up','north','south','west','east'];
+const DIRV={down:[0,-1,0],up:[0,1,0],north:[0,0,-1],south:[0,0,1],west:[-1,0,0],east:[1,0,0]};
+function dirName(v){ const x=Math.round(v[0]),y=Math.round(v[1]),z=Math.round(v[2]); return x<0?'west':x>0?'east':y<0?'down':y>0?'up':z<0?'north':'south'; }
+/** Blockstate rotation: first X, then Y (each in 90° steps, vanilla direction) */
+function rotXY(v,rx,ry){
+  let x=v[0],y=v[1],z=v[2];
+  for(let k=((rx/90)%4+4)%4;k>0;k--){ const ny=z, nz=-y; y=ny; z=nz; }
+  for(let k=((ry/90)%4+4)%4;k>0;k--){ const nx=-z, nz=x; x=nx; z=nz; }
+  return [x,y,z];
+}
+function elemRot(v,r){
+  const o=r.origin||[8,8,8]; const a=(r.angle||0)*Math.PI/180, c=Math.cos(a), s=Math.sin(a);
+  let x=v[0]-o[0],y=v[1]-o[1],z=v[2]-o[2], nx=x,ny=y,nz=z;
+  if(r.axis==='x'){ ny=y*c-z*s; nz=y*s+z*c; }
+  else if(r.axis==='y'){ nx=x*c+z*s; nz=-x*s+z*c; }
+  else { nx=x*c-y*s; ny=x*s+y*c; }
+  if(r.rescale){ const f=1/Math.abs(c); if(r.axis==='x'){ny*=f;nz*=f;} else if(r.axis==='y'){nx*=f;nz*=f;} else {nx*=f;ny*=f;} }
+  return [nx+o[0],ny+o[1],nz+o[2]];
+}
+function faceCorners(d,f,t){
+  const x1=f[0],y1=f[1],z1=f[2],x2=t[0],y2=t[1],z2=t[2];
+  switch(d){
+    case 'down': return [[x1,y1,z2],[x1,y1,z1],[x2,y1,z1],[x2,y1,z2]];
+    case 'up': return [[x1,y2,z1],[x1,y2,z2],[x2,y2,z2],[x2,y2,z1]];
+    case 'north': return [[x2,y2,z1],[x2,y1,z1],[x1,y1,z1],[x1,y2,z1]];
+    case 'south': return [[x1,y2,z2],[x1,y1,z2],[x2,y1,z2],[x2,y2,z2]];
+    case 'west': return [[x1,y2,z1],[x1,y1,z1],[x1,y1,z2],[x1,y2,z2]];
+    default: return [[x2,y2,z2],[x2,y1,z2],[x2,y1,z1],[x2,y2,z1]];
+  }
+}
+function defaultUV(d,f,t){
+  const x1=f[0],y1=f[1],z1=f[2],x2=t[0],y2=t[1],z2=t[2];
+  switch(d){
+    case 'down': return [x1,16-z2,x2,16-z1];
+    case 'up': return [x1,z1,x2,z2];
+    case 'north': return [16-x2,16-y2,16-x1,16-y1];
+    case 'south': return [x1,16-y2,x2,16-y1];
+    case 'west': return [z1,16-y2,z2,16-y1];
+    default: return [16-z2,16-y2,16-z1,16-y1];
+  }
+}
+const eq3=(a,b)=>a[0]===b[0]&&a[1]===b[1]&&a[2]===b[2];
+/** Converts a resolved model into finished faces (block coordinates 0..1) */
+function bakeModel(part,out){
+  const m=part.m, rx=part.x||0, ry=part.y||0, els=m.elements;
+  els.forEach((el,ei)=>{
+    const f=el.from.slice(), t=el.to.slice();
+    if(ei>0&&eq3(els[0].from,el.from)&&eq3(els[0].to,el.to)){ for(let k=0;k<3;k++){ f[k]-=0.04; t[k]+=0.04; } } // overlay against z-fighting
+    for(const d of DIRN){
+      const face=el.faces&&el.faces[d]; if(!face) continue;
+      const tr=resolveTex(face.texture,m.textures); if(!tr) continue;
+      let c=faceCorners(d,f,t);
+      if(el.rotation) c=c.map(v=>elemRot(v,el.rotation));
+      c=c.map(v=>{ const p=rotXY([v[0]-8,v[1]-8,v[2]-8],rx,ry); return [(p[0]+8)/16,(p[1]+8)/16,(p[2]+8)/16]; });
+      const e1=[c[1][0]-c[0][0],c[1][1]-c[0][1],c[1][2]-c[0][2]], e2=[c[2][0]-c[1][0],c[2][1]-c[1][1],c[2][2]-c[1][2]];
+      let nx=e1[1]*e2[2]-e1[2]*e2[1], ny=e1[2]*e2[0]-e1[0]*e2[2], nz=e1[0]*e2[1]-e1[1]*e2[0];
+      const len=Math.hypot(nx,ny,nz); if(len<1e-9) continue; nx/=len;ny/=len;nz/=len;
+      const uv=face.uv||defaultUV(d,f,t); const co=[[uv[0],uv[1]],[uv[0],uv[3]],[uv[2],uv[3]],[uv[2],uv[1]]];
+      const r=(((face.rotation||0)/90)%4+4)%4;
+      const uvs=[0,1,2,3].map(i=>co[(i+r)%4]);
+      out.push({tex:texKey(tr),verts:c,uv:uvs,n:[nx,ny,nz],tint:face.tintindex!==undefined&&face.tintindex>=0,cull:face.cullface?dirName(rotXY(DIRV[face.cullface]||[0,0,0],rx,ry)):null});
+    }
+  });
+}
+
+/* ====================================================================
+   Built-in substitute shapes (if the vanilla model is missing / offline)
+   ==================================================================== */
+const WOODS=['oak','spruce','birch','jungle','acacia','dark_oak','mangrove','cherry','bamboo','crimson','warped','pale_oak'];
+function plankTex(base){
+  if(WOODS.includes(base)) return base+'_planks';
+  const map={brick:'bricks',stone_brick:'stone_bricks',nether_brick:'nether_bricks',red_nether_brick:'red_nether_bricks',mud_brick:'mud_bricks',prismarine_brick:'prismarine_bricks',end_stone_brick:'end_stone_bricks',quartz:'quartz_block_side',smooth_quartz:'quartz_block_bottom',purpur:'purpur_block',petrified_oak:'oak_planks',smooth_sandstone:'sandstone_top',smooth_red_sandstone:'red_sandstone_top',tuff_brick:'tuff_bricks',resin_brick:'resin_bricks',cobbled_deepslate:'cobbled_deepslate',deepslate_brick:'deepslate_bricks',deepslate_tile:'deepslate_tiles',polished_blackstone_brick:'polished_blackstone_bricks'};
+  return map[base]||base;
+}
+function fbox(f,t,tex,tint){
+  const faces={};
+  for(const d of DIRN){
+    const tx=typeof tex==='string'?tex:(tex[d]||tex.side||tex.all);
+    const c=(d==='down'&&f[1]===0)||(d==='up'&&t[1]===16)||(d==='north'&&f[2]===0)||(d==='south'&&t[2]===16)||(d==='west'&&f[0]===0)||(d==='east'&&t[0]===16);
+    faces[d]={texture:tx,cullface:c?d:undefined,tintindex:(tint===true||tint===d)?0:undefined};
+  }
+  return {from:f,to:t,faces};
+}
+function fcross(tex,tinted){
+  const mk=a=>({from:[0.8,0,8],to:[15.2,16,8],rotation:{origin:[8,8,8],axis:'y',angle:a,rescale:true},faces:{north:{uv:[0,0,16,16],texture:tex,tintindex:tinted?0:undefined},south:{uv:[0,0,16,16],texture:tex,tintindex:tinted?0:undefined}}});
+  return [mk(45),mk(-45)];
+}
+function connKind(name){
+  if(/_fence$/.test(name)) return 'fence';
+  if(/_wall$/.test(name)) return 'wall';
+  if(/_pane$/.test(name)||name==='iron_bars') return 'pane';
+  return null;
+}
+function cubeTex(name){
+  if(name==='grass_block') return {up:'grass_block_top',down:'dirt',side:'grass_block_side'};
+  if(name==='podzol'||name==='mycelium') return {up:name+'_top',down:'dirt',side:name+'_side'};
+  if(/_wood$/.test(name)) return name.replace(/_wood$/,'_log');
+  if(/(^|_)(log|stem|hyphae)$/.test(name)||name==='bone_block'||name==='basalt'||name==='hay_block') return {up:name+'_top',down:name+'_top',side:name};
+  if(/^(sandstone|red_sandstone)$/.test(name)) return {up:name+'_top',down:name+'_bottom',side:name};
+  if(name==='quartz_block') return {up:'quartz_block_top',down:'quartz_block_bottom',side:'quartz_block_side'};
+  if(name==='bookshelf') return {up:'oak_planks',down:'oak_planks',side:'bookshelf'};
+  if(name==='crafting_table') return {up:'crafting_table_top',down:'oak_planks',side:'crafting_table_side'};
+  if(name==='tnt') return {up:'tnt_top',down:'tnt_bottom',side:'tnt_side'};
+  if(name==='water') return 'water_still';
+  if(name==='lava') return 'lava_still';
+  if(/^(furnace|blast_furnace|smoker)$/.test(name)) return {up:name+'_top',down:name+'_top',side:name+'_side'};
+  return name;
+}
+function fallbackParts(name,P){
+  const part=(els,x,y)=>({m:{elements:els,textures:{}},x:x||0,y:y||0});
+  const FY={east:0,south:90,west:180,north:270};
+  if(name.endsWith('_slab')){ const tx=plankTex(name.slice(0,-5)); const t=P.type||'bottom'; return [part([fbox([0,t==='top'?8:0,0],[16,t==='bottom'?8:16,16],tx)])]; }
+  if(name.endsWith('_stairs')){
+    // built in the "facing=east" orientation (high side to the east), then rotated about Y; top-half stairs only mirrored in Y
+    const tx=plankTex(name.slice(0,-7)), sh=P.shape||'straight', top=P.half==='top';
+    const bx=[[0,0,0,16,8,16]];
+    if(sh==='outer_right') bx.push([8,8,8,16,16,16]);
+    else if(sh==='outer_left') bx.push([8,8,0,16,16,8]);
+    else if(sh==='inner_right') bx.push([8,8,0,16,16,16],[0,8,8,8,16,16]);
+    else if(sh==='inner_left') bx.push([8,8,0,16,16,16],[0,8,0,8,16,8]);
+    else bx.push([8,8,0,16,16,16]);
+    return [part(bx.map(b=>top?fbox([b[0],16-b[4],b[2]],[b[3],16-b[1],b[5]],tx):fbox([b[0],b[1],b[2]],[b[3],b[4],b[5]],tx)),0,FY[P.facing]||0)];
+  }
+  if(name.endsWith('_carpet')){ const c=name.slice(0,-7); return [part([fbox([0,0,0],[16,1,16],c==='moss'?'moss_block':c+'_wool')])]; }
+  const ck=connKind(name);
+  if(ck==='pane'){
+    const tx=name==='iron_bars'?'iron_bars':name.replace(/_pane$/,''); let N=P.north==='true',E=P.east==='true',S=P.south==='true',W=P.west==='true';
+    if(!N&&!E&&!S&&!W) N=E=S=W=true;
+    const els=[fbox([7,0,7],[9,16,9],tx)];
+    if(N) els.push(fbox([7,0,0],[9,16,8],tx)); if(S) els.push(fbox([7,0,8],[9,16,16],tx));
+    if(W) els.push(fbox([0,0,7],[8,16,9],tx)); if(E) els.push(fbox([8,0,7],[16,16,9],tx));
+    return [part(els)];
+  }
+  if(ck==='fence'){
+    const tx=plankTex(name.replace(/_fence$/,'')); const els=[fbox([6,0,6],[10,16,10],tx)];
+    if(P.north==='true'){ els.push(fbox([7,6,0],[9,9,6],tx),fbox([7,12,0],[9,15,6],tx)); }
+    if(P.south==='true'){ els.push(fbox([7,6,10],[9,9,16],tx),fbox([7,12,10],[9,15,16],tx)); }
+    if(P.west==='true'){ els.push(fbox([0,6,7],[6,9,9],tx),fbox([0,12,7],[6,15,9],tx)); }
+    if(P.east==='true'){ els.push(fbox([10,6,7],[16,9,9],tx),fbox([10,12,7],[16,15,9],tx)); }
+    return [part(els)];
+  }
+  if(ck==='wall'){
+    const tx=plankTex(name.replace(/_wall$/,'')); const on=v=>v&&v!=='none'&&v!=='false'; const els=[];
+    const any=on(P.north)||on(P.south)||on(P.east)||on(P.west);
+    if(P.up!=='false'||!any) els.push(fbox([4,0,4],[12,16,12],tx));
+    if(on(P.north)) els.push(fbox([5,0,0],[11,14,8],tx)); if(on(P.south)) els.push(fbox([5,0,8],[11,14,16],tx));
+    if(on(P.west)) els.push(fbox([0,0,5],[8,14,11],tx)); if(on(P.east)) els.push(fbox([8,0,5],[16,14,11],tx));
+    return [part(els)];
+  }
+  if(name.endsWith('_fence_gate')){
+    const tx=plankTex(name.slice(0,-11)); const yy=(P.facing==='east'||P.facing==='west')?90:0;
+    return [part([fbox([0,5,7],[2,16,9],tx),fbox([14,5,7],[16,16,9],tx),fbox([2,6,7],[14,9,9],tx),fbox([2,12,7],[14,15,9],tx)],0,yy)];
+  }
+  if(name.endsWith('_door')){
+    const tx=name+'_'+(P.half==='upper'?'top':'bottom'); const y=FY[P.facing]||0;
+    if(P.open!=='true') return [part([fbox([0,0,0],[3,16,16],tx)],0,y)];
+    return [part([P.hinge==='right'?fbox([0,0,0],[16,16,3],tx):fbox([0,0,13],[16,16,16],tx)],0,y)];
+  }
+  if(name.endsWith('_trapdoor')){
+    if(P.open!=='true') return [part([P.half==='top'?fbox([0,13,0],[16,16,16],name):fbox([0,0,0],[16,3,16],name)])];
+    return [part([fbox([0,0,13],[16,16,16],name)],0,{south:0,west:90,north:180,east:270}[P.facing]||0)];
+  }
+  if(/(^|_)torch$/.test(name)) return [part([fbox([7,0,7],[9,10,9],name.replace('wall_',''))])];
+  if(/_pressure_plate$/.test(name)) return [part([fbox([1,0,1],[15,1,15],plankTex(name.replace(/_pressure_plate$/,'')))])];
+  if(/_button$/.test(name)) return [part([fbox([5,0,6],[11,2,10],plankTex(name.replace(/_button$/,'')))])];
+  if(name==='snow') return [part([fbox([0,0,0],[16,2*(parseInt(P.layers||'1',10)||1),16],'snow')])];
+  if(/^(tall_grass|large_fern|sunflower|lilac|rose_bush|peony|tall_seagrass)$/.test(name)){ const tx=name+'_'+(P.half==='upper'?'top':'bottom'); return [part(fcross(tx,/grass|fern/.test(name)))]; }
+  if(/(dandelion|poppy|orchid|allium|azure_bluet|tulip|oxeye|cornflower|lily_of_the_valley|sapling|^grass$|^short_grass$|^fern$|dead_bush|seagrass|sweet_berry|^bush$|mushroom$|torchflower|wither_rose|propagule|sugar_cane)/.test(name)&&!/block|potted/.test(name)){
+    const tx=name==='grass'?'short_grass':name; return [part(fcross(tx,/^(grass|short_grass|fern|sugar_cane)$/.test(name)))];
+  }
+  if(/(^|_)chest$/.test(name)) return [part([fbox([1,0,1],[15,14,15],name==='ender_chest'?'obsidian':'oak_planks')])];
+  if(/_bed$/.test(name)) return [part([fbox([0,3,0],[16,9,16],name.replace(/_bed$/,'')+'_wool')])];
+  if(/_sign$/.test(name)&&!/hanging/.test(name)) return [part([fbox([2,7,7],[14,15,9],plankTex(name.replace(/(_wall)?_sign$/,'')))])];
+  if(/_banner$/.test(name)) return [part([fbox([1,0,7],[15,16,9],name.replace(/(_wall)?_banner$/,'')+'_wool')])];
+  if(name==='grass_block'){
+    const ov=fbox([0,0,0],[16,16,16],{side:'grass_block_side_overlay'},true); delete ov.faces.up; delete ov.faces.down;
+    return [part([fbox([0,0,0],[16,16,16],cubeTex(name),'up'),ov])];
+  }
+  const ax=P.axis, rx=(ax==='x'||ax==='z')?90:0, ry=ax==='x'?90:0;
+  return [part([fbox([0,0,0],[16,16,16],cubeTex(name),(/_leaves$/.test(name)||name==='water')?true:undefined)],rx,ry)];
+}
+
+/* ====================================================================
+   Automatic connections (only if the file has no north/east/... properties)
+   ==================================================================== */
+const CONN_DIRS=[['north',0,0,-1],['east',1,0,0],['south',0,0,1],['west',-1,0,0]];
+function needsConn(sp){ const k=connKind(sp.name); if(!k) return null; const p=sp.props; if('north' in p||'east' in p||'south' in p||'west' in p) return null; return k; }
+function looksSolid(n){ return !/(air|glass|leaves|slab|stairs|fence|wall|pane|bars|door|trapdoor|button|plate|torch|carpet|sign|banner|flower|sapling|grass|fern|vine|ladder|rail|water|lava|chest|bed|lantern|chain|candle|head|skull|pot|cake|lever|snow$|ice$)/.test(n); }
+function connects(kind,nb){
+  if(kind==='fence') return /_fence$|_fence_gate$/.test(nb)||looksSolid(nb);
+  if(kind==='wall') return /_wall$|_fence_gate$/.test(nb)||looksSolid(nb);
+  return /_pane$|^iron_bars$|glass$/.test(nb)||looksSolid(nb);
+}
+function computeConn(kind,m,grid,i){
+  const o={}; let key='';
+  for(const [d,dx,dy,dz] of CONN_DIRS){
+    const j=grid.at(m.X[i]+dx,m.Y[i]+dy,m.Z[i]+dz); const ok=j>=0&&connects(kind,m.types[m.T[j]].name);
+    o[d]=kind==='wall'?(ok?'low':'none'):(ok?'true':'false'); key+=ok?'1':'0';
+  }
+  if(kind==='wall') o.up='true';
+  return {props:o,key};
+}
+function makeGrid(m){
+  const cells=m.w*m.h*m.d;
+  if(cells<=64e6){
+    const g=new Int32Array(cells).fill(-1); for(let i=0;i<m.n;i++) g[(m.Y[i]*m.d+m.Z[i])*m.w+m.X[i]]=i;
+    return {at:(x,y,z)=>(x<0||y<0||z<0||x>=m.w||y>=m.h||z>=m.d)?-1:g[(y*m.d+z)*m.w+x]};
+  }
+  const g=new Map(); for(let i=0;i<m.n;i++) g.set((m.Y[i]*m.d+m.Z[i])*m.w+m.X[i],i);
+  return {at:(x,y,z)=>{ if(x<0||y<0||z<0||x>=m.w||y>=m.h||z>=m.d) return -1; const v=g.get((y*m.d+z)*m.w+x); return v===undefined?-1:v; }};
+}
+
+/* ====================================================================
+   Bake: block state -> face list
+   ==================================================================== */
+const SEE_THROUGH=/glass|leaves|^ice$|frosted_ice|slime_block|honey_block|water|spawner|scaffolding|cobweb|barrier|light$|portal|sculk_sensor|mangrove_roots|azalea/;
+const SELF_CULL=/glass|^ice$|water|honey_block|slime_block/;
+/** Fluids only have a dummy model in the pack (just "particle") – the game draws them separately, so use the built-in shape here */
+const FLUID=/^(water|lava)$/;
+const TRANS=/glass|^ice$|frosted_ice|^water$|slime_block|honey_block/;   // drawn in the blending pass
+function bakeBlock(sp,conn,assets,stats){
+  const props=conn?Object.assign({},sp.props,conn.props):sp.props;
+  let parts=[], useFallback=true;
+  if(assets&&assets.states[sp.name]&&!FLUID.test(sp.name)){
+    const refs=pickModelRefs(assets.states[sp.name],props); let entity=false;
+    for(const r of refs){
+      const mm=resolveModel(assets.models,r.model);
+      if(!mm){ entity=true; continue; }
+      if(mm.entity){ entity=true; continue; }
+      if(mm.elements&&mm.elements.length) parts.push({m:mm,x:r.x||0,y:r.y||0});
+    }
+    if(parts.length) useFallback=false;
+    else if(refs.length&&!entity){ useFallback=false; } // vanilla model without geometry (e.g. barrier): invisible
+  }
+  if(useFallback){ parts=fallbackParts(sp.name,props); stats.fallback++; } else stats.vanilla++;
+  const faces=[]; for(const p of parts) bakeModel(p,faces);
+  let mn=[9,9,9],mx=[-9,-9,-9];
+  for(const f of faces) for(const v of f.verts) for(let k=0;k<3;k++){ if(v[k]<mn[k])mn[k]=v[k]; if(v[k]>mx[k])mx[k]=v[k]; }
+  if(!faces.length){ mn=[0,0,0]; mx=[0,0,0]; }
+  const full=parts.some(p=>p.m.elements.some(e=>eq3(e.from,[0,0,0])&&eq3(e.to,[16,16,16])&&!e.rotation));
+  const tc=tintFor(sp.name);
+  const lin=tc?tc.map(c=>Math.round(Math.pow(c/255,2.2)*255)):[255,255,255];
+  return {faces,bounds:[mn[0],mn[1],mn[2],mx[0],mx[1],mx[2]],opaque:full&&!SEE_THROUGH.test(sp.name),selfCull:SELF_CULL.test(sp.name),tint:lin,trans:TRANS.test(sp.name),alpha:sp.name==='water'?170:255,full,rank:sp.name==='water'?0:1};
+}
+function bakeAll(m,assets,grid){
+  const cache=new Map(), list=[], BK=new Uint32Array(m.n), stats={vanilla:0,fallback:0};
+  for(let i=0;i<m.n;i++){
+    const sp=m.stInfo[m.SI[i]]; const kind=needsConn(sp); let key=String(m.SI[i]), conn=null;
+    if(kind){ conn=computeConn(kind,m,grid,i); key+='|'+conn.key; }
+    let idx=cache.get(key);
+    if(idx===undefined){ idx=list.length; cache.set(key,idx); list.push(bakeBlock(sp,conn,assets,stats)); }
+    BK[i]=idx;
+  }
+  return {list,BK,stats};
+}
+
+/* ====================================================================
+   Geometry build (all blocks -> one mesh, sorted by Y)
+   ==================================================================== */
+/**
+ * Builds the faces of all blocks (sorted by layer).
+ * opt.include(i)  – only create these blocks (filter view)
+ * opt.occludes(j) – neighbour j really occludes (visible AND drawn opaque); otherwise the face stays
+ * opt.cullUp      – also drop upward-facing faces (only sensible if include/occludes model the visibility exactly)
+ * Without opt: default view in which "up" is never dropped, so the layer slider can expose roofs.
+ */
+function buildGeometry(m,grid,baked,atlas,opt){
+  opt=opt||{};
+  const include=opt.include||null, occludes=opt.occludes||null, cullUp=!!opt.cullUp;
+  const {tileOf,cols,S,W:atlasW,H:atlasH,proc}=atlas, T=atlas.T||S, P=atlas.P||0;
+  const {list,BK}=baked, n=m.n, H=m.h, X=m.X,Y=m.Y,Z=m.Z;
+  const start=new Int32Array(H+1); for(let i=0;i<n;i++) start[Y[i]+1]++; for(let y=0;y<H;y++) start[y+1]+=start[y];
+  const fill=start.slice(0,H), order=new Int32Array(n); for(let i=0;i<n;i++) order[fill[Y[i]]++]=i;
+  const culled=(i,f,b)=>{
+    if(!f.cull) return false;
+    if(f.cull==='up'&&!cullUp) return false;
+    const v=DIRV[f.cull]; const nb=grid.at(X[i]+v[0],Y[i]+v[1],Z[i]+v[2]); if(nb<0) return false;
+    if(occludes&&!occludes(nb)) return false;                 // neighbour is hidden/wireframe -> face stays visible
+    const nbk=list[BK[nb]];
+    if(nbk.opaque) return true;
+    if(b.trans&&nbk.trans&&nbk.full){                         // two translucent cubes: draw the shared face only ONCE
+      if(m.T[nb]===m.T[i]) return b.selfCull;                 // glass against glass
+      return b.rank<nbk.rank||(b.rank===nbk.rank&&m.T[nb]<m.T[i]);   // water yields to glass; otherwise the smaller type wins
+    }
+    return b.selfCull&&m.T[nb]===m.T[i];
+  };
+  // Pass 1: count faces per layer – separately for opaque (O) and translucent (T)
+  const qO=new Uint32Array(n), qT=new Uint32Array(n), lsO=new Int32Array(H+1), lsT=new Int32Array(H+1);
+  let totO=0,totT=0;
+  for(let y=0,p=0;y<H;y++){
+    lsO[y]=totO*6; lsT[y]=totT*6;
+    for(;p<start[y+1];p++){
+      const i=order[p]; if(include&&!include(i)) continue;
+      const b=list[BK[i]]; let q=0; for(const f of b.faces) if(!culled(i,f,b)) q++;
+      if(b.trans){ qT[i]=q; totT+=q; } else { qO[i]=q; totO+=q; }
+    }
+  }
+  lsO[H]=totO*6; lsT[H]=totT*6;
+  const total=totO+totT, V=total*4; if(V>40e6) throw new Error('Model too large to display ('+total.toLocaleString('en-US')+' faces).');
+  const pos=new Float32Array(V*3), nrm=new Int8Array(V*3), uv=new Float32Array(V*2), col=new Uint8Array(V*3), state=new Uint8Array(V), type=new Uint16Array(V), local=new Uint8Array(V*2), alpha=new Uint8Array(V);
+  const mk=c=>V<65536?new Uint16Array(c*6):new Uint32Array(c*6);
+  const idxO=mk(totO), idxT=mk(totT), qc=new Float32Array(totT*3);
+  const bv0=new Uint32Array(n), bvn=new Uint32Array(n);
+  let vi=0,qo=0,qt=0; const sc=S/16, inset=1-0.0015;
+  for(let p=0;p<n;p++){
+    const i=order[p]; if(include&&!include(i)){ bv0[i]=vi; bvn[i]=0; continue; }
+    const b=list[BK[i]]; bv0[i]=vi; bvn[i]=(qO[i]+qT[i])*4;
+    for(const f of b.faces){
+      if(culled(i,f,b)) continue;
+      const t=tileOf.get(f.tex)||0, tx=t%cols, ty=(t/cols)|0;
+      const c=(f.tint&&!proc.has(f.tex))?b.tint:[255,255,255];   // substitute textures are already coloured
+      for(let k=0;k<4;k++){
+        const v=f.verts[k], o=vi+k;
+        pos[o*3]=X[i]+v[0]; pos[o*3+1]=Y[i]+v[1]; pos[o*3+2]=Z[i]+v[2];
+        nrm[o*3]=Math.round(f.n[0]*127); nrm[o*3+1]=Math.round(f.n[1]*127); nrm[o*3+2]=Math.round(f.n[2]*127);
+        uv[o*2]=(tx*T+P+S/2+(f.uv[k][0]-8)*sc*inset)/atlasW; uv[o*2+1]=1-(ty*T+P+S/2+(f.uv[k][1]-8)*sc*inset)/atlasH;
+        col[o*3]=c[0]; col[o*3+1]=c[1]; col[o*3+2]=c[2];
+        type[o]=m.T[i]; alpha[o]=b.alpha;
+        local[o*2]=(k===2||k===3)?255:0; local[o*2+1]=(k===1||k===2)?255:0;
+      }
+      const I=b.trans?idxT:idxO, q=b.trans?qt++:qo++;
+      if(b.trans){ const w=f.verts; qc[q*3]=X[i]+(w[0][0]+w[1][0]+w[2][0]+w[3][0])/4; qc[q*3+1]=Y[i]+(w[0][1]+w[1][1]+w[2][1]+w[3][1])/4; qc[q*3+2]=Z[i]+(w[0][2]+w[1][2]+w[2][2]+w[3][2])/4; }
+      I[q*6]=vi; I[q*6+1]=vi+1; I[q*6+2]=vi+2; I[q*6+3]=vi; I[q*6+4]=vi+2; I[q*6+5]=vi+3;
+      vi+=4;
+    }
+  }
+  return {pos,nrm,uv,col,state,type,local,alpha,idxO,idxT,qcT:qc,lsO,lsT,bv0,bvn,totalQuads:total};
+}
+
+/* ====================================================================
+   Click selection via voxel raycast (DDA)
+   ==================================================================== */
+function pickRay(m,grid,baked,ox,oy,oz,dx,dy,dz,visible){
+  const dim=[m.w,m.h,m.d], o=[ox,oy,oz], d=[dx,dy,dz];
+  let tmin=0,tmax=1e9;
+  for(let a=0;a<3;a++){
+    if(Math.abs(d[a])<1e-12){ if(o[a]<0||o[a]>dim[a]) return -1; continue; }
+    let t1=(0-o[a])/d[a], t2=(dim[a]-o[a])/d[a]; if(t1>t2){const s=t1;t1=t2;t2=s;}
+    if(t1>tmin) tmin=t1; if(t2<tmax) tmax=t2; if(tmin>tmax) return -1;
+  }
+  const t0=tmin+1e-6; const p=[o[0]+d[0]*t0,o[1]+d[1]*t0,o[2]+d[2]*t0];
+  const cell=[0,0,0],step=[0,0,0],tD=[0,0,0],tM=[0,0,0];
+  for(let a=0;a<3;a++){
+    cell[a]=Math.min(dim[a]-1,Math.max(0,Math.floor(p[a])));
+    if(Math.abs(d[a])<1e-12){ step[a]=0; tD[a]=Infinity; tM[a]=Infinity; }
+    else { step[a]=d[a]>0?1:-1; tD[a]=Math.abs(1/d[a]); tM[a]=((cell[a]+(d[a]>0?1:0))-o[a])/d[a]; }
+  }
+  for(let it=0,max=dim[0]+dim[1]+dim[2]+4;it<max;it++){
+    const j=grid.at(cell[0],cell[1],cell[2]);
+    if(j>=0&&visible(j)){
+      const b=baked.list[baked.BK[j]].bounds; let a0=0,a1=1e9;
+      for(let a=0;a<3;a++){
+        const lo=cell[a]+b[a], hi=cell[a]+b[a+3];
+        if(Math.abs(d[a])<1e-12){ if(o[a]<lo||o[a]>hi){ a1=-1; break; } continue; }
+        let u1=(lo-o[a])/d[a], u2=(hi-o[a])/d[a]; if(u1>u2){const s=u1;u1=u2;u2=s;}
+        if(u1>a0)a0=u1; if(u2<a1)a1=u2; if(a0>a1) break;
+      }
+      if(a0<=a1&&a1>=0&&b[3]>b[0]-1e-9) return j;
+    }
+    let ax=0; if(tM[1]<tM[ax]) ax=1; if(tM[2]<tM[ax]) ax=2;
+    if(tM[ax]===Infinity) return -1;
+    cell[ax]+=step[ax]; tM[ax]+=tD[ax];
+    if(cell[ax]<0||cell[ax]>=dim[ax]) return -1;
+  }
+  return -1;
+}
+/* ====================================================================
+   Resource pack (ZIP/JAR): index paths, read JSON, fetch textures
+   ==================================================================== */
+function indexPackPaths(paths){
+  const tex=new Map(), models=new Map(), states=new Map(), meta=new Map();
+  for(const p0 of paths){
+    const p=p0.replace(/\\/g,'/');
+    let m=p.match(/(?:^|\/)assets\/minecraft\/textures\/blocks?\/([^\/]+)\.png\.mcmeta$/i);
+    if(m){ meta.set(m[1].toLowerCase(),p0); continue; }
+    m=p.match(/(?:^|\/)assets\/minecraft\/textures\/blocks?\/([^\/]+)\.png$/i);
+    if(m){ tex.set(m[1].toLowerCase(),p0); continue; }
+    m=p.match(/(?:^|\/)assets\/minecraft\/models\/(block\/.+)\.json$/i);
+    if(m){ models.set(m[1].toLowerCase(),p0); continue; }
+    m=p.match(/(?:^|\/)assets\/minecraft\/blockstates\/([^\/]+)\.json$/i);
+    if(m) states.set(m[1].toLowerCase(),p0);
+  }
+  return {tex,models,states,meta};
+}
+async function loadPackFrom(JSZip,buf,name,say){
+  const zip=await JSZip.loadAsync(buf);
+  const paths=[]; zip.forEach((p,f)=>{ if(!f.dir) paths.push(p); });
+  const idx=indexPackPaths(paths);
+  if(!idx.tex.size) throw new Error('Not a valid resource pack: no PNG files found in assets/minecraft/textures/block/.');
+  const states={}, models={}, jobs=[];
+  idx.states.forEach((p,k)=>jobs.push([states,k,p])); idx.models.forEach((p,k)=>jobs.push([models,k,p]));
+  let next=0,done=0;
+  const worker=async()=>{ while(next<jobs.length){ const [dst,k,p]=jobs[next++]; try{ dst[k]=JSON.parse((await zip.file(p).async('string')).replace(/^﻿/,'')); }catch(e){ /* skip broken JSON file */ } if(say&&++done%250===0) say('Reading resource pack … '+done+' / '+jobs.length); } };
+  await Promise.all(Array.from({length:8},worker));
+  return {name,zip,tex:idx.tex,meta:idx.meta,states,models,nTex:idx.tex.size,nStates:Object.keys(states).length,nModels:Object.keys(models).length};
+}
+function packTexBlob(pack,name){ const p=pack.tex.get(String(name).toLowerCase()); return p?pack.zip.file(p).async('blob'):null; }
+/** Optional .png.mcmeta (animation) of a pack texture */
+async function packTexMeta(pack,name){
+  const p=pack.meta&&pack.meta.get(String(name).toLowerCase()); if(!p) return null;
+  try{ return JSON.parse((await pack.zip.file(p).async('string')).replace(/^﻿/,'')); }catch(e){ return null; }
+}
+/** Size of ONE frame of a (possibly animated) texture: strips like water_still (16x512) or water_flow (32x1024)
+    yield their first square frame; a .mcmeta with animation.width/height may specify a different format. */
+function frameSize(w,h,meta){
+  const a=meta&&meta.animation;
+  if(a&&a.width>0&&a.height>0&&a.width<=w&&a.height<=h) return [a.width|0,a.height|0];
+  const s=Math.min(w,h); return [s,s];
+}
+/** Sorts the quads [q0,q1) from src (6 indices each) by distance to the camera, far -> near (counting sort, O(n)), and writes them to dst starting at 0 */
+function sortQuadsBackToFront(src,dst,qc,q0,q1,cx,cy,cz){
+  const n=q1-q0; if(n<=0) return 0;
+  const B=4096, cnt=new Uint32Array(B+1), key=new Uint16Array(n), d=new Float32Array(n);
+  let mn=Infinity,mx=-Infinity;
+  for(let k=0;k<n;k++){ const o=(q0+k)*3, dx=qc[o]-cx, dy=qc[o+1]-cy, dz=qc[o+2]-cz, v=Math.sqrt(dx*dx+dy*dy+dz*dz); d[k]=v; if(v<mn)mn=v; if(v>mx)mx=v; }
+  const sc=mx>mn?(B-1)/(mx-mn):0;
+  for(let k=0;k<n;k++){ const b=(B-1)-Math.round((d[k]-mn)*sc); key[k]=b; cnt[b+1]++; }
+  for(let b=0;b<B;b++) cnt[b+1]+=cnt[b];
+  for(let k=0;k<n;k++){ const pos=cnt[key[k]]++, s=(q0+k)*6, t=pos*6; dst[t]=src[s]; dst[t+1]=src[s+1]; dst[t+2]=src[s+2]; dst[t+3]=src[s+3]; dst[t+4]=src[s+4]; dst[t+5]=src[s+5]; }
+  return n;
+}
+
+/* ====================================================================
+   Placement (rotate/mirror) and live data (current state, surroundings preview)
+   Everything here is pure logic without browser dependencies and is tested in Node.
+   ==================================================================== */
+const DIRS4=['north','east','south','west'];
+const mirDir=d=>d==='east'?'west':d==='west'?'east':d;
+const rotDir=(d,r)=>{ const i=DIRS4.indexOf(d); return i<0?d:DIRS4[(i+r)&3]; };
+/** Mirror = swap east↔west (X axis), then rotate by r×90° clockwise (seen from above) */
+const xDir=(d,r,mir)=>rotDir(mir?mirDir(d):d,r);
+function xformProps(name,props,rot,mir){
+  if(!rot&&!mir) return props;
+  const out={};
+  const swapLR=v=>v.replace(/left/,'\u0001').replace(/right/,'left').replace(/\u0001/,'right');
+  for(const k of Object.keys(props)){
+    const v=props[k];
+    if(k==='facing'||k==='north'||k==='east'||k==='south'||k==='west'){
+      const nk=(k==='facing')?k:xDir(k,rot,mir);
+      out[nk]=(k==='facing')?xDir(v,rot,mir):v;
+    }else if(k==='axis'){ out[k]=(rot&1)?(v==='x'?'z':v==='z'?'x':v):v; }
+    else if(k==='rotation'&&/^\d+$/.test(v)){ let r=+v; if(mir) r=(16-r)%16; out[k]=String((r+4*rot)%16); }
+    else if(k==='hinge'){ out[k]=mir?swapLR(v):v; }
+    else if(k==='shape'&&/_stairs$/.test(name)){ out[k]=mir?swapLR(v):v; }
+    else if(k==='shape'&&/rail$/.test(name)){
+      const t=v.split('_').map(s=>DIRS4.includes(s)?xDir(s,rot,mir):s);
+      const asc=t[0]==='ascending';
+      if(!asc){ t.sort((a,b)=>DIRS4.indexOf(a)%2-DIRS4.indexOf(b)%2||(a==='north'||a==='east'?-1:1)); }   // canonical: north/south first, then east/west
+      out[k]=t.join('_');
+    }
+    else if(k==='type'&&/^(trapped_)?chest$/.test(name)){ out[k]=mir?swapLR(v):v; }
+    else out[k]=v;
+  }
+  return out;
+}
+function xformStateStr(str,rot,mir){
+  if(!rot&&!mir) return str;
+  const k=str.indexOf('['); if(k<0) return str;
+  const head=str.slice(0,k), p=parseState(str);
+  const np=xformProps(p.name,p.props,rot,mir);
+  return head+'['+Object.keys(np).map(a=>a+'='+np[a]).join(',')+']';
+}
+const modelKey=m=>m.pkey||(m.name+'|'+m.w+'x'+m.h+'x'+m.d+'|'+m.n);
+/** Bring the plan into the world orientation. Block order stays the same (index i = same block) so the build progress still fits. */
+function placeModel(m,rot,mir){
+  rot=((rot%4)+4)%4; mir=!!mir;
+  if(!rot&&!mir) return m;
+  const n=m.n, X=new Int32Array(n), Z=new Int32Array(n);
+  for(let i=0;i<n;i++){
+    let x=m.X[i], z=m.Z[i], w=m.w, d=m.d;
+    if(mir) x=w-1-x;
+    for(let r=0;r<rot;r++){ const nx=d-1-z, nz=x; x=nx; z=nz; const t=w; w=d; d=t; }
+    X[i]=x; Z[i]=z;
+  }
+  const states=m.states.map(s=>xformStateStr(s,rot,mir));
+  return Object.assign({},m,{w:(rot&1)?m.d:m.w, d:(rot&1)?m.w:m.d, X, Z, states, stInfo:states.map(parseState), types:m.types.map(t=>Object.assign({},t,{done:0})), pkey:modelKey(m)});
+}
+
+/** Cell store for the current state and the preview (coordinates relative to the box corner).
+    Cell: >=0 palette index, -1 DEFAULT (air above the ground, otherwise fill), -2 fill. */
+const GUNK=-32768;
+class CellStore{
+  constructor(o,s){
+    this.o=[o[0]|0,o[1]|0,o[2]|0]; this.s=[s[0]|0,s[1]|0,s[2]|0];
+    if(this.s.some(v=>v<1||v>1024)||this.s[0]*this.s[1]*this.s[2]>40e6) throw new Error('Invalid size');
+    this.cells=new Int16Array(this.s[0]*this.s[1]*this.s[2]).fill(-1);
+    this.g=new Int16Array(this.s[0]*this.s[2]).fill(GUNK);
+    this.count=0;
+  }
+  set(b){
+    const [sx,sy,sz]=this.s, c=this.cells;
+    for(let i=0;i+4<b.length;i+=5){
+      const x=b[i],y=b[i+1],z=b[i+2]; let v=b[i+3];
+      if(!(x>=0&&y>=0&&z>=0&&x<sx&&y<sy&&z<sz)) continue;
+      if(!(v>=-2&&v<32767)) continue;
+      c[(y*sz+z)*sx+x]=v; this.count++;
+    }
+  }
+  ground(m){
+    const [sx,,sz]=this.s, x0=m.x|0, z0=m.z|0, w=m.w|0, d=m.d|0, g=m.g||[];
+    if(w<1||d<1||g.length<w*d) return;
+    for(let j=0;j<d;j++) for(let i=0;i<w;i++){
+      const x=x0+i,z=z0+j; if(x<0||z<0||x>=sx||z>=sz) continue;
+      const v=g[j*w+i]; if(v>=-30000&&v<=30000) this.g[z*sx+x]=v;
+    }
+  }
+}
+/** Classifies all cells: 0 empty, 1 fill, 2 real block. Columns without a known ground height stay empty (nothing invented). */
+function classifyStore(st,pal,palAir){
+  const [sx,sy,sz]=st.s, cls=new Uint8Array(sx*sy*sz);
+  for(let y=0;y<sy;y++) for(let z=0;z<sz;z++) for(let x=0;x<sx;x++){
+    const i=(y*sz+z)*sx+x, v=st.cells[i];
+    if(v>=0){ cls[i]=palAir(v)?0:2; }
+    else if(v===-2){ cls[i]=1; }
+    else{ const g=st.g[z*sx+x]; cls[i]=(g!==GUNK&&y<=g)?1:0; }
+  }
+  return cls;
+}
+/** Builds a model from a cell store. opts.hideFill: omit the underground (fill).
+    opts.plan {m,ox,oy,oz}: the building plan (already aligned) is placed into the cells (preview only); overrides the terrain. */
+function storeToModel(st,pal,opts){
+  opts=opts||{};
+  const palAirCache=new Map();
+  const palAir=v=>{ let a=palAirCache.get(v); if(a===undefined){ a=!pal[v]||AIR.test(pal[v]); palAirCache.set(v,a); } return a; };
+  const cls=classifyStore(st,pal,palAir);
+  const [sx,sy,sz]=st.s, b=new Builder(), fill=b.state('minecraft:stone'), pmap=new Map();
+  let overlap=0, planN=0; const ov=opts.plan?new Map():null;
+  if(opts.plan){
+    const p=opts.plan, m=p.m;
+    for(let i=0;i<m.n;i++){
+      const x=m.X[i]+p.ox, y=m.Y[i]+p.oy, z=m.Z[i]+p.oz; planN++;
+      if(x<0||y<0||z<0||x>=sx||y>=sy||z>=sz) continue;
+      const k=(y*sz+z)*sx+x; if(cls[k]!==0) overlap++;
+      ov.set(k,m.SI[i]);
+    }
+  }
+  const stIdx=new Map();   // plan state -> builder state
+  const at=(x,y,z)=>(x<0||y<0||z<0||x>=sx||y>=sy||z>=sz)?-1:cls[(y*sz+z)*sx+x];
+  for(let y=0;y<sy;y++) for(let z=0;z<sz;z++) for(let x=0;x<sx;x++){
+    const k=(y*sz+z)*sx+x;
+    if(ov&&ov.has(k)){
+      const si=ov.get(k); let bi=stIdx.get(si); if(bi===undefined){ bi=b.state(opts.plan.m.states[si]); stIdx.set(si,bi); }
+      b.add(x,y,z,bi); continue;
+    }
+    const c=cls[k]; if(!c) continue;
+    if(c===2){ const v=st.cells[k]; let bi=pmap.get(v); if(bi===undefined){ bi=b.state(pal[v]||'minecraft:stone'); pmap.set(v,bi); } b.add(x,y,z,bi); }
+    else if(!opts.hideFill){
+      // Only fill that borders something else (surface, cavity, edge) – the inside would be invisible anyway
+      const e=at(x-1,y,z)!==1||at(x+1,y,z)!==1||at(x,y-1,z)!==1||at(x,y+1,z)!==1||at(x,y,z-1)!==1||at(x,y,z+1)!==1;
+      if(e) b.add(x,y,z,fill);
+    }
+  }
+  const n=b.x.length;
+  if(!n) return {model:null,overlap,planN};
+  const m=finalize(b,opts.name||'Live',st.s);
+  m.virtual=true; m.origin=st.o.slice(); m.pkey=(opts.name||'Live')+'|live';
+  return {model:m,overlap,planN};
+}
+/** Ground height (relative to the box bottom) of a column, or null */
+function groundAt(st,x,z){ if(x<0||z<0||x>=st.s[0]||z>=st.s[2]) return null; const g=st.g[z*st.s[0]+x]; return g===GUNK?null:g; }
+/** Normalise the pairing code (case and dashes do not matter) */
+function normCode(s){ return String(s||'').toUpperCase().replace(/[-\s]/g,''); }
+function fmtCode(s){ return normCode(s).replace(/(.{4})(?=.)/g,'$1-'); }
+/** Which corner (block coordinate) is entered? Returns the corner with the smallest coordinates. */
+function minCorner(corner,x,z,sx,sz){
+  const east=corner==='ne'||corner==='se', south=corner==='sw'||corner==='se';
+  return {x:east?x-sx+1:x, z:south?z-sz+1:z};
+}
+
+//#PURE-END
+
+/* ====================================================================
+   gzip (pako via CDN, fallback: DecompressionStream)
+   ==================================================================== */
+let pakoLib=null;
+async function getPako(){ if(pakoLib!==null) return pakoLib||null; try{ pakoLib=await window.MCB.umd('pako',window.MCB.CDN.pako); }catch(e){ console.warn('pako could not be loaded',e); pakoLib=false; } return pakoLib||null; }
+async function maybeInflate(buf){
+  const u8=new Uint8Array(buf);
+  const gz=u8[0]===0x1f&&u8[1]===0x8b, zl=u8[0]===0x78&&(u8[1]===0x01||u8[1]===0x9c||u8[1]===0xda||u8[1]===0x5e);
+  if(!gz&&!zl) return u8;
+  const pk=await getPako();
+  if(pk){ try{ return gz?pk.ungzip(u8):pk.inflate(u8); }catch(e){ console.warn('pako error',e); } }
+  if(typeof DecompressionStream!=='undefined'){
+    const ds=new DecompressionStream(gz?'gzip':'deflate');
+    return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(ds)).arrayBuffer());
+  }
+  throw new Error('Cannot decompress (gzip) – please check the internet connection for the pako library.');
+}
+async function parseAny(name,buf){
+  const ext=name.split('.').pop().toLowerCase(); let b;
+  if(ext==='json'){ b=loadJSON(new TextDecoder().decode(buf)); }
+  else { const root=new NBTReader(await maybeInflate(buf)).root(); b=parseRoot(root); }
+  return finalize(b,name);
+}
+
+/* ====================================================================
+   JSZip, resource pack and optional CDN assets
+   ==================================================================== */
+let jszipLib=null;
+async function getJSZip(){
+  if(jszipLib) return jszipLib;
+  try{ jszipLib=await window.MCB.umd('JSZip',window.MCB.CDN.jszip); }catch(e){ console.warn('JSZip could not be loaded',e); }
+  if(!jszipLib) throw new Error('The JSZip library could not be loaded – please check the internet connection/CDN.');
+  return jszipLib;
+}
+let PACK=null;
+function updatePackUI(){
+  $('packInfo').textContent=PACK
+    ?('Resource pack: '+PACK.name+' · '+PACK.nTex+' block textures'+(PACK.nModels?' · '+PACK.nModels+' models':'')+(PACK.nStates?' · '+PACK.nStates+' blockstates':''))
+    :'No resource pack loaded – substitute colours (or CDN textures, if reachable) are used.';
+  $('btnPackClear').disabled=!PACK;
+}
+
+const ASSET_BASES=['https://cdn.jsdelivr.net/gh/PrismarineJS/minecraft-assets@master/data','https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data'];
+const ASSET_VERSIONS=['1.21.8','1.21.4','1.21.1','1.20.4','1.20.2','1.19.4','1.18.2','1.17.1','1.16.4'];
+let CDN=null, cdnFailed=false, activeCdn=null;
+async function fetchJSON(url,ms=20000){
+  const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),ms);
+  try{ const r=await fetch(url,{signal:ctl.signal}); if(!r.ok){ const e=new Error('HTTP '+r.status); e.name='HttpError'; throw e; } return await r.json(); } finally{ clearTimeout(to); }
+}
+/** Loads blockstates/models from the CDN (only if enabled); gives up immediately on network/CORS errors */
+async function ensureCdn(say){
+  if(!$('chkCdn').checked) return null;
+  if(CDN) return CDN; if(cdnFailed) return null;
+  for(const base of ASSET_BASES){
+    for(const ver of ASSET_VERSIONS){
+      try{
+        say&&say('Loading Minecraft assets '+ver+' …');
+        const [states,models]=await Promise.all([fetchJSON(base+'/'+ver+'/blocks_states.json'),fetchJSON(base+'/'+ver+'/blocks_models.json')]);
+        if(states&&models&&Object.keys(states).length>50){ CDN={base,ver,states,models,dir:null}; return CDN; }
+      }catch(e){ console.warn('CDN assets '+ver+' ('+base+') could not be loaded',e&&e.message||e); if(e&&e.name!=='HttpError') break; }
+    }
+  }
+  cdnFailed=true; return null;
+}
+function loadImage(url){ return new Promise(res=>{ const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>res(im); im.onerror=()=>res(null); im.src=url; }); }
+/** Blob -> image (createImageBitmap, otherwise <img> fallback for older Safari versions) */
+async function blobToImage(blob){
+  if(typeof createImageBitmap==='function'){ try{ return await createImageBitmap(blob); }catch(e){ /* fallback below */ } }
+  const url=URL.createObjectURL(blob);
+  try{ return await loadImage(url); } finally{ URL.revokeObjectURL(url); }
+}
+/** Load a texture: resource pack first, then (optional) CDN. Result {img,fw,fh} (fw/fh = first animation frame) or null -> substitute colour */
+async function loadTexImage(name){
+  if(PACK){
+    try{
+      const bl=await packTexBlob(PACK,name);
+      if(bl){ const im=await blobToImage(bl); const w=im&&(im.naturalWidth||im.width), h=im&&(im.naturalHeight||im.height);
+        if(w>0&&h>0){ const [fw,fh]=frameSize(w,h,await packTexMeta(PACK,name)); return {img:im,fw,fh}; } }
+    }catch(e){ console.warn('Texture in the resource pack is not readable: '+name,e); }
+  }
+  if(activeCdn){
+    const dirs=activeCdn.dir?[activeCdn.dir]:['blocks','block'];
+    for(const d of dirs){ const im=await loadImage(activeCdn.base+'/'+activeCdn.ver+'/'+d+'/'+name+'.png');
+      if(im){ activeCdn.dir=d; const w=im.naturalWidth||im.width, h=im.naturalHeight||im.height; if(w>0&&h>0){ const [fw,fh]=frameSize(w,h,null); return {img:im,fw,fh}; } } }
+  }
+  return null;
+}
+const tick=()=>new Promise(r=>setTimeout(r,0));
+/** Glass tiles: vanilla glass is completely transparent in the middle (only the frame is visible). So that the panes
+ *  stay recognisable, fully transparent pixels get a faint light-blue tint (alpha ≈ 19 %). */
+function liftGlass(g,tx,ty,S){
+  try{
+    const id=g.getImageData(tx,ty,S,S), d=id.data; let r=0,gr=0,b=0,c=0;
+    for(let i=0;i<d.length;i+=4) if(d[i+3]>=200){ r+=d[i]; gr+=d[i+1]; b+=d[i+2]; c++; }
+    const k=c?0.4:0, base=[(c?r/c:0)*k+205*(1-k),(c?gr/c:0)*k+230*(1-k),(c?b/c:0)*k+240*(1-k)];
+    let ch=false;
+    for(let i=0;i<d.length;i+=4) if(d[i+3]<48){ d[i]=base[0]; d[i+1]=base[1]; d[i+2]=base[2]; d[i+3]=48; ch=true; }
+    if(ch) g.putImageData(id,tx,ty);
+  }catch(e){ /* canvas not readable -> unchanged */ }
+}
+/** Builds a texture atlas; tile size = largest frame (HD packs stay sharp). Animation strips -> first frame only. */
+async function buildAtlas(names,say){
+  const n=Math.max(1,names.length), cols=Math.ceil(Math.sqrt(n)), rows=Math.ceil(n/cols);
+  const imgs=new Array(names.length).fill(null), proc=new Set();
+  let ok=0, done=0, next=0;
+  const worker=async()=>{ while(next<names.length){ const i=next++; imgs[i]=await loadTexImage(names[i]); if(imgs[i]) ok++; if(say&&++done%8===0) say('Loading textures '+done+' / '+names.length+' …'); } };
+  await Promise.all(Array.from({length:12},worker));
+  let S=16; for(const t of imgs) if(t) S=Math.max(S,t.fw);
+  const maxTex=Math.min(8192,renderer.capabilities.maxTextureSize||4096);
+  // Every tile gets a border (P pixels, edge pixels repeated): so mip levels and filters do not mix in neighbouring tiles (= the light lines between blocks)
+  const P=16;   // = 2^4: up to mip level 4 every tile stays separate
+  S=Math.max(16,Math.min(S,256,Math.floor(maxTex/cols)-2*P)); S=Math.max(16,S&~15);   // tile size multiple of 16 so the levels divide exactly
+  const T=S+2*P;
+  const cv=document.createElement('canvas'); cv.width=cols*T; cv.height=rows*T;
+  const g=cv.getContext('2d'); g.imageSmoothingEnabled=false;
+  const tmp=document.createElement('canvas'); tmp.width=tmp.height=16; const tg=tmp.getContext('2d');
+  const tileOf=new Map(); names.forEach((nm,i)=>tileOf.set(nm,i));
+  names.forEach((nm,i)=>{
+    const cx0=(i%cols)*T, cy0=((i/cols)|0)*T, tx=cx0+P, ty=cy0+P, t=imgs[i];
+    if(t){ g.drawImage(t.img,0,0,t.fw,t.fh,tx,ty,S,S); if(t.img.close) t.img.close(); if(/glass/.test(nm)) liftGlass(g,tx,ty,S); }   // first frame only (top left)
+    else { proc.add(nm); tg.putImageData(new ImageData(procTilePixels(nm),16,16),0,0); g.drawImage(tmp,0,0,16,16,tx,ty,S,S); }
+    g.drawImage(cv,tx,ty,S,1,tx,cy0,S,P); g.drawImage(cv,tx,ty+S-1,S,1,tx,ty+S,S,P);          // border top/bottom
+    g.drawImage(cv,tx,ty,1,S,cx0,ty,P,S); g.drawImage(cv,tx+S-1,ty,1,S,tx+S,ty,P,S);          // left/right
+    g.drawImage(cv,tx,ty,1,1,cx0,cy0,P,P); g.drawImage(cv,tx+S-1,ty,1,1,tx+S,cy0,P,P);        // corners
+    g.drawImage(cv,tx,ty+S-1,1,1,cx0,ty+S,P,P); g.drawImage(cv,tx+S-1,ty+S-1,1,1,tx+S,ty+S,P,P);
+  });
+  return {canvas:cv,tileOf,cols,S,T,P,W:cv.width,H:cv.height,ok,total:names.length,proc};
+}
+
+/* ====================================================================
+   Scene
+   ==================================================================== */
+const view=$('view');
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setClearColor(0x8fb8e8);
+view.appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+const persp=new THREE.PerspectiveCamera(60,1,0.1,5000);
+persp.position.set(20,15,25);
+const ortho=new THREE.OrthographicCamera(-10,10,10,-10,0.1,500);   // 2D view (top-down)
+let camera=persp;
+const controls=new OrbitControls(persp,renderer.domElement); controls.enabled=false;   // OrbitControls only in the 2D view; 3D = own spectator controls
+controls.enableDamping=true; controls.dampingFactor=.12; controls.zoomToCursor=true; controls.screenSpacePanning=true;
+scene.add(new THREE.HemisphereLight(0xffffff,0x8a8fa0,1.9));
+const sun=new THREE.DirectionalLight(0xffffff,1.9); sun.position.set(30,60,20); scene.add(sun);
+const selBox=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),new THREE.LineBasicMaterial({color:0xffee00,depthTest:false}));
+selBox.visible=false; selBox.renderOrder=10; scene.add(selBox);
+function resize(){
+  const w=view.clientWidth||1,h=view.clientHeight||1; renderer.setSize(w,h,false);
+  persp.aspect=w/h; persp.updateProjectionMatrix();
+  ortho.left=-ortho.top*w/h; ortho.right=ortho.top*w/h; ortho.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(view); resize();
+
+/* Shared shader setup: open/done display, type filter, alpha per face */
+const U={uOpen:{value:0},uDone:{value:1},uType:{value:-1},uMipMax:{value:4}};
+let useMipShader=true;
+const GLSL=`
+  diffuseColor.a *= vAlpha;
+  if (uType >= 0.0 && abs(vType - uType) > 0.5) discard;
+  if (vState > 0.5) {
+    if (uDone > 1.5) discard;
+    if (uDone > 0.5) diffuseColor.rgb *= vec3(0.55, 1.0, 0.62);
+  } else {
+    if (uOpen > 2.5) discard;
+    if (uOpen > 1.5) {
+      vec2 e = min(vLocal, 1.0 - vLocal);
+      if (min(e.x, e.y) > 0.08) discard;
+      diffuseColor = vec4(0.35, 0.75, 1.0, 1.0);
+    } else if (uOpen > 0.5) {
+      if (mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) < 0.5) discard;
+      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.8, 1.0), 0.3);
+    }
+  }`;
+/** Minecraft mipmaps: detail level from the on-screen size as usual, but at most uMipMax levels (0 = never shrink = sharp). */
+const MIPFRAG=`
+#ifdef USE_MAP
+  vec2 mcTs = vec2(textureSize(map, 0));
+  vec2 mcDx = dFdx(vMapUv * mcTs);
+  vec2 mcDy = dFdy(vMapUv * mcTs);
+  float mcLod = clamp(0.5 * log2(max(max(dot(mcDx, mcDx), dot(mcDy, mcDy)), 1e-8)), 0.0, uMipMax);
+  vec4 sampledDiffuseColor = textureLod(map, vMapUv, mcLod);
+  diffuseColor *= sampledDiffuseColor;
+#endif`;
+/** trans=false: cutout pass (alphaTest); trans=true: pass for water/glass/ice.
+ *  - 'blend': real blending, depthWrite off, ONE pass (forceSinglePass), faces are sorted by us by camera distance.
+ *  - 'solid': fallback without blending (opaque, alphaTest) – in case a device does not render the blending pass. */
+function makeMaterial(map,trans){
+  const solid=trans&&transMode==='solid';
+  const mat=new THREE.MeshLambertMaterial({map,vertexColors:true,
+    alphaTest:trans?(solid?0.1:0.01):0.5, transparent:trans&&!solid, depthWrite:!trans||solid, depthTest:true,
+    side:(trans||dblSide)?THREE.DoubleSide:THREE.FrontSide});
+  if(trans&&!solid) mat.forceSinglePass=true;   // otherwise three draws back and front faces separately and destroys our sorting
+  mat.customProgramCacheKey=()=>'mcbuild-v6-'+(useMipShader?'m':'p')+(trans?'t'+(solid?'s':'b'):'o');
+  mat.onBeforeCompile=sh=>{
+    sh.uniforms.uOpen=U.uOpen; sh.uniforms.uDone=U.uDone; sh.uniforms.uType=U.uType; sh.uniforms.uMipMax=U.uMipMax;
+    sh.vertexShader=sh.vertexShader
+      .replace('#include <common>','#include <common>\nattribute float aState;\nattribute float aType;\nattribute float aAlpha;\nattribute vec2 aLocal;\nvarying float vState;\nvarying float vType;\nvarying float vAlpha;\nvarying vec2 vLocal;')
+      .replace('#include <begin_vertex>','#include <begin_vertex>\nvState=aState;vType=aType;vAlpha=aAlpha;vLocal=aLocal;');
+    sh.fragmentShader=sh.fragmentShader
+      .replace('#include <common>','#include <common>\nuniform float uOpen;\nuniform float uDone;\nuniform float uType;\nvarying float vState;\nvarying float vType;\nvarying float vAlpha;\nvarying vec2 vLocal;')
+      .replace('#include <alphatest_fragment>',GLSL+'\n#include <alphatest_fragment>');   // alpha scaling BEFORE the alpha test
+    if(useMipShader) sh.fragmentShader=sh.fragmentShader
+      .replace('#include <common>','#include <common>\nuniform float uMipMax;')
+      .replace('#include <map_fragment>',MIPFRAG);
+  };
+  return mat;
+}
+
+/* ====================================================================
+   State
+   ==================================================================== */
+let model=null, grid=null, baked=null, base=null, filt=null, cur=null, curAtlas=null, atlasTex=null, done=null, doneCount=0, layerTotal=null, layerDone=null, typeRows=[];
+let layer=0, onlyLayer=false, openMode='normal', doneMode='tint', typeFilter=-1, storageKey='';
+let view2d=false, saved3d=null, gridFine=null, gridMajor=null, transMode='blend';
+const onlyEff=()=>onlyLayer||view2d;   // in the 2D view only the selected layer is ever shown
+const history=[];
+let viewDirty=false, sortDirty=true, lastSortT=0, dblSide=false; const lastSortPos={x:1e9,y:1e9,z:1e9}; const SORT_MAX=400000;
+try{ dblSide=localStorage.getItem('mcbuild:dbl')==='1'; if(localStorage.getItem('mcbuild:trans')==='solid') transMode='solid'; }catch(e){}
+const OPEN_MODES={normal:0,ghost:1,wire:2,hide:3}, DONE_MODES={normal:0,tint:1,hide:2};
+
+/** Mipmap levels like Minecraft (0 = off/sharp … 4 = Minecraft default). Every tile has a 16 px border so nothing from neighbouring tiles bleeds in up to level 4. */
+let mipLevels=4; try{ const f=parseInt(localStorage.getItem('mcbuild:mip')); if(f>=0&&f<=4) mipLevels=f; }catch(e){}
+function applyFilter(){
+  if(!atlasTex) return;
+  atlasTex.magFilter=THREE.NearestFilter; atlasTex.minFilter=THREE.NearestMipmapLinearFilter||1005; atlasTex.generateMipmaps=true; atlasTex.anisotropy=1;
+  U.uMipMax.value=mipLevels; atlasTex.needsUpdate=true;
+}
+if(renderer.debug) renderer.debug.onShaderError=()=>{   // fallback: if a device rejects the mipmap shader, use a simple filter
+  if(!useMipShader) return; useMipShader=false;
+  for(const gs of [base,filt]) if(gs){ gs.mesh.material.needsUpdate=true; if(gs.meshT) gs.meshT.material.needsUpdate=true; }
+  if(atlasTex){ atlasTex.minFilter=THREE.NearestFilter; atlasTex.generateMipmaps=false; atlasTex.needsUpdate=true; }
+  flash('Mipmap levels are not supported here – simple filter active');
+};
+function showLoading(t){ $('loading').style.display=t?'flex':'none'; if(t) $('loadingText').textContent=t; }
+/* ---------- Geometry sets ----------
+   base: default view, built once (layer slider = draw range only).
+   filt: filter view (type filter, "this layer only", done/open hidden or wireframe): rebuilt on every change,
+         with culling against the actually visible neighbours – so faces exposed by filters (stairs, wall attachments …) are kept. */
+function makeSet(gdata,filtered){
+  const geom=new THREE.BufferGeometry();
+  geom.setAttribute('position',new THREE.BufferAttribute(gdata.pos,3));
+  geom.setAttribute('normal',new THREE.BufferAttribute(gdata.nrm,3,true));
+  geom.setAttribute('uv',new THREE.BufferAttribute(gdata.uv,2));
+  geom.setAttribute('color',new THREE.BufferAttribute(gdata.col,3,true));
+  geom.setAttribute('aState',new THREE.BufferAttribute(gdata.state,1).setUsage(THREE.DynamicDrawUsage));
+  geom.setAttribute('aType',new THREE.BufferAttribute(gdata.type,1));
+  geom.setAttribute('aAlpha',new THREE.BufferAttribute(gdata.alpha,1,true));
+  geom.setAttribute('aLocal',new THREE.BufferAttribute(gdata.local,2,true));
+  geom.setIndex(new THREE.BufferAttribute(gdata.idxO,1));
+  const mesh=new THREE.Mesh(geom,makeMaterial(atlasTex,false)); mesh.frustumCulled=false; scene.add(mesh);
+  const gs={gd:gdata,geom,mesh,geomT:null,meshT:null,dynT:null,filtered};
+  if(gdata.idxT.length){   // second pass: water/glass/ice with blending, shares the vertex data, indices are sorted by camera distance
+    const geomT=new THREE.BufferGeometry();
+    for(const k in geom.attributes) geomT.setAttribute(k,geom.attributes[k]);
+    gs.dynT=gdata.idxT.slice();
+    geomT.setIndex(new THREE.BufferAttribute(gs.dynT,1).setUsage(THREE.DynamicDrawUsage));
+    const meshT=new THREE.Mesh(geomT,makeMaterial(atlasTex,true)); meshT.frustumCulled=false; meshT.renderOrder=1; scene.add(meshT);
+    gs.geomT=geomT; gs.meshT=meshT;
+  }
+  return gs;
+}
+function disposeSet(gs){ if(!gs) return; for(const x of [gs.mesh,gs.meshT]) if(x){ scene.remove(x); x.geometry.dispose(); x.material.dispose(); } }
+function showSet(gs,v){ if(!gs) return; gs.mesh.visible=v; if(gs.meshT) gs.meshT.visible=v; }
+function disposeScene(){
+  disposeSet(base); disposeSet(filt); base=filt=cur=null; disposeGrid();
+  if(atlasTex) atlasTex.dispose();
+  atlasTex=null; selBox.visible=false;
+}
+function initStates(gs){
+  const a=gs.geom.attributes.aState, d=gs.gd; a.array.fill(0);
+  for(let i=0;i<model.n;i++) if(done[i]&&d.bvn[i]) a.array.fill(1,d.bv0[i],d.bv0[i]+d.bvn[i]);
+  a.needsUpdate=true;
+}
+function setStates(ids,val){
+  for(const gs of (filt?[base,filt]:[base])){
+    const a=gs.geom.attributes.aState, d=gs.gd;
+    for(const i of ids) if(d.bvn[i]) a.array.fill(val,d.bv0[i],d.bv0[i]+d.bvn[i]);
+    a.needsUpdate=true;
+  }
+}
+function applySide(){ for(const gs of [base,filt]) if(gs){ gs.mesh.material.side=dblSide?THREE.DoubleSide:THREE.FrontSide; gs.mesh.material.needsUpdate=true; } }
+const filtersActive=()=>typeFilter>=0||onlyEff()||doneMode==='hide'||openMode!=='normal';
+/** A neighbour only occludes if it is visible AND drawn as a solid body (wireframe/semi-transparent occlude nothing) */
+const occ=j=>isVisible(j)&&(done[j]?true:openMode==='normal');
+function syncGeometry(){
+  viewDirty=false; if(!model||!base) return;
+  if(!filtersActive()){
+    if(filt){ disposeSet(filt); filt=null; }
+    base.geom.setDrawRange(0,base.gd.lsO[layer+1]);
+    showSet(base,true); cur=base;
+  }else{
+    const data=buildGeometry(model,grid,baked,curAtlas,{include:isVisible,occludes:occ,cullUp:true});
+    const old=filt; filt=data.totalQuads?makeSet(data,true):null;
+    if(filt) initStates(filt);
+    disposeSet(old); showSet(base,false); cur=filt;
+  }
+  sortDirty=true; sortTrans(cur);
+}
+/** Order translucent faces back to front so water/glass do not "swallow" each other */
+function sortTrans(gs){
+  if(!gs||!gs.geomT) return;
+  const d=gs.gd; let q0=0,q1=d.idxT.length/6;
+  if(!gs.filtered){ q0=d.lsT[0]/6; q1=d.lsT[layer+1]/6; }
+  if(q1-q0>SORT_MAX){ gs.dynT.set(d.idxT); gs.geomT.setDrawRange(q0*6,(q1-q0)*6); gs.geomT.index.needsUpdate=true; return; }
+  const p=camera.position, n=sortQuadsBackToFront(d.idxT,gs.dynT,d.qcT,q0,q1,p.x,p.y,p.z);
+  gs.geomT.setDrawRange(0,n*6); gs.geomT.index.needsUpdate=true;
+  lastSortPos.x=p.x; lastSortPos.y=p.y; lastSortPos.z=p.z; lastSortT=performance.now(); sortDirty=false;
+}
+function maybeSort(){
+  const gs=cur; if(!gs||!gs.geomT||!model) return;
+  const p=camera.position, dx=p.x-lastSortPos.x, dy=p.y-lastSortPos.y, dz=p.z-lastSortPos.z, s=Math.max(model.w,model.h,model.d)*0.004;
+  if(!sortDirty&&dx*dx+dy*dy+dz*dz<s*s) return;
+  if(!sortDirty&&performance.now()-lastSortT<100) return;
+  sortTrans(gs);
+}
+function escapeHtml(s){ return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+let loadToken=0;
+async function setModel(m,opts={}){
+  const token=++loadToken; const say=t=>{ if(!opts.quiet&&token===loadToken) showLoading(t); };
+  const prev={layer,only:onlyLayer,tf:(typeFilter>=0&&model&&model.types[typeFilter])?model.types[typeFilter].name:null,top:!!model&&layer>=model.h-1};
+  try{
+    say('Loading Minecraft assets …'); await tick();
+    activeCdn=await ensureCdn(say);
+    say('Creating block geometries …'); await tick();
+    const g=makeGrid(m), bk=bakeAll(m,mergeAssets(activeCdn,PACK),g);
+    const names=[...new Set(bk.list.flatMap(b=>b.faces.map(f=>f.tex)))].sort();
+    say('Loading textures 0 / '+names.length+' …'); await tick();
+    const atlas=await buildAtlas(names,say);
+    if(token!==loadToken) return;
+    say('Building 3D model …'); await tick();
+    const data=buildGeometry(m,g,bk,atlas);
+    disposeScene(); model=m; grid=g; baked=bk; curAtlas=atlas;
+    atlasTex=new THREE.CanvasTexture(atlas.canvas);
+    atlasTex.magFilter=THREE.NearestFilter;   // near: crisp square pixels
+    atlasTex.colorSpace=THREE.SRGBColorSpace; applyFilter();
+    base=makeSet(data,false); cur=base; buildGrid();
+
+    layerTotal=new Int32Array(m.h); for(let i=0;i<m.n;i++) layerTotal[m.Y[i]]++;
+    layerDone=new Int32Array(m.h); done=new Uint8Array(m.n); doneCount=0; history.length=0;
+    storageKey=m.virtual?'':'mcbuild:v1:'+modelKey(m);   // live views have no progress
+    layer=m.h-1; onlyLayer=false; openMode='normal'; doneMode='tint';
+    if(!m.virtual) loadProgress();
+    if(opts.keepView){ layer=prev.top?m.h-1:Math.min(prev.layer,m.h-1); onlyLayer=prev.only; }
+    document.body.classList.toggle('virt',!!m.virtual);
+    $('layerRange').max=m.h-1; $('layerRange').value=layer; $('chkOnly').checked=onlyLayer; $('selOpen').value=openMode; $('selDone').value=doneMode;
+    buildMatList();
+    if(opts.keepView&&prev.tf){ const ti=m.types.findIndex(t=>t.name===prev.tf); if(ti>=0){ typeFilter=ti; typeRows.forEach((r,i)=>r&&r.row.classList.toggle('active',i===ti)); } }
+    recount(); initStates(base); viewDirty=false; applyView(); syncGeometry(); updateStats(); if(!opts.keepCamera) fit();
+    if(!m.virtual) $('modelInfo').innerHTML='<b>'+escapeHtml(m.name)+'</b><br>'+m.w+' × '+m.h+' × '+m.d+' (W × H × D) · '+m.n.toLocaleString('en-US')+' blocks · '+m.types.filter(t=>t.count).length+' types';
+    const src=[]; if(PACK) src.push('Pack "'+PACK.name+'"'); if(activeCdn) src.push('CDN '+activeCdn.ver);
+    $('assetInfo').textContent='Textures: '+(atlas.total-atlas.proc.size)+'/'+atlas.total+(src.length?' from '+src.join(' + '):'')
+      +(atlas.proc.size?' · '+atlas.proc.size+' as substitute colour':'')+' · tile '+atlas.S+' px · shapes: '+bk.stats.vanilla+' from models / '+bk.stats.fallback+' built-in'
+      +((!PACK&&!activeCdn)?' – tip: drop a resource pack (.zip) for the original textures':'');
+  }catch(err){ console.error(err); alert('Error: '+err.message); }
+  finally{ if(token===loadToken) showLoading(''); }
+}
+/* ---------- 3D camera: free flight like Minecraft spectator mode ---------- */
+let yaw=0, pitch=0, flySpeed=1, sens=1, hoverLook=false, phoneMode=false, mouseHidden=false, lockActive=false, hoverPaused=false;
+try{ const v=parseFloat(localStorage.getItem('mcbuild:sens')); if(v>=0.2&&v<=3) sens=v; hoverLook=localStorage.getItem('mcbuild:hover')==='1'; phoneMode=localStorage.getItem('mcbuild:phone')==='1'; }catch(e){}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function applyLook(){ pitch=clamp(pitch,-1.553,1.553); persp.rotation.set(pitch,yaw,0,'YXZ'); }
+function lookAtPoint(x,y,z){ const dx=x-persp.position.x, dy=y-persp.position.y, dz=z-persp.position.z; yaw=Math.atan2(-dx,-dz); pitch=Math.atan2(dy,Math.hypot(dx,dz)); applyLook(); }
+function look(dyaw,dpitch){ yaw-=dyaw*sens; pitch-=dpitch*sens; applyLook(); }
+function fit(){
+  const m=model; if(!m) return; const s=Math.max(m.w,m.h,m.d);
+  if(view2d){ frame2D(); return; }
+  persp.position.set(m.w/2+s*1.1,m.h/2+s*0.9,m.d/2+s*1.5);
+  lookAtPoint(m.w/2,m.h/2,m.d/2);
+  if(phoneMode){ controls.target.set(m.w/2,m.h/2,m.d/2); }
+  persp.near=Math.max(.05,s/400); persp.far=s*30; persp.updateProjectionMatrix(); if(phoneMode) controls.update();
+}
+
+/* ---------- View ---------- */
+function applyView(){
+  if(!model||!base) return;
+  U.uOpen.value=OPEN_MODES[openMode]; U.uDone.value=DONE_MODES[doneMode]; U.uType.value=typeFilter;
+  updateLayerUI();
+  if(filtersActive()) viewDirty=true; else syncGeometry();   // the filter view is rebuilt once per frame
+}
+function setLayer(v){ if(!model) return; layer=Math.max(0,Math.min(model.h-1,v)); $('layerRange').value=layer; applyView(); scheduleSave(); }
+function updateLayerUI(){
+  if(!model) return;
+  updateGridY();
+  $('layerLabel').textContent=(onlyEff()?'Layer ':'Up to layer ')+(layer+1)+' / '+model.h;
+  const t=layerTotal[layer], d=layerDone[layer];
+  $('layerStats').textContent='Layer '+(layer+1)+': '+d+' / '+t+' ('+(t?(d/t*100).toFixed(0):100)+' %)';
+  $('btnLayerDone').textContent='Layer '+(layer+1)+' ✔'; $('btnUpToDone').textContent='Everything up to layer '+(layer+1)+' ✔'; $('btnLayerReset').textContent='Layer '+(layer+1)+' ✖';
+}
+
+/* ---------- Progress ---------- */
+function recount(){
+  doneCount=0; layerDone.fill(0); model.types.forEach(t=>t.done=0);
+  for(let i=0;i<model.n;i++) if(done[i]){ doneCount++; layerDone[model.Y[i]]++; model.types[model.T[i]].done++; }
+}
+function setMany(ids,val,rec=true){
+  if(model&&model.virtual) return;   // live views (Current) are never marked
+  const ch=[];
+  for(const i of ids){ if(done[i]===val) continue; done[i]=val; const d=val?1:-1; doneCount+=d; layerDone[model.Y[i]]+=d; model.types[model.T[i]].done+=d; ch.push(i); }
+  if(!ch.length) return;
+  setStates(ch,val);
+  if(rec){ history.push({ids:ch,val}); if(history.length>300) history.shift(); }
+  if(doneMode==='hide'||openMode!=='normal') viewDirty=true;   // visibility/occlusion changed -> recompute faces
+  updateStats(); scheduleSave();
+}
+function undo(){ const h=history.pop(); if(h) setMany(h.ids,h.val?0:1,false); }
+function idsWhere(fn){ const r=[]; for(let i=0;i<model.n;i++) if(fn(model.Y[i])) r.push(i); return r; }
+function updateStats(){
+  if(!model) return; const n=model.n, p=n?doneCount/n*100:0;
+  $('bar').style.width=p+'%'; $('pct').textContent=p.toFixed(1)+' %';
+  $('stDone').textContent=doneCount.toLocaleString('de-DE'); $('stLeft').textContent=(n-doneCount).toLocaleString('de-DE'); $('stTotal').textContent=n.toLocaleString('de-DE');
+  model.types.forEach((t,ti)=>{ const r=typeRows[ti]; if(!r) return; r.cnt.textContent=model.virtual?String(t.count):t.done+' / '+t.count; r.row.classList.toggle('complete',t.done===t.count); });
+  updateLayerUI();
+}
+let saveTimer=0;
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveProgress,300); }
+function saveProgress(){
+  if(!model||!done||model.virtual||!storageKey) return;
+  try{
+    const bytes=new Uint8Array((model.n+7)>>3); for(let i=0;i<model.n;i++) if(done[i]) bytes[i>>3]|=1<<(i&7);
+    let s=''; for(let i=0;i<bytes.length;i+=8192) s+=String.fromCharCode.apply(null,bytes.subarray(i,i+8192));
+    localStorage.setItem(storageKey,JSON.stringify({d:btoa(s),layer,only:onlyLayer,open:openMode,done:doneMode,t:Date.now()}));
+  }catch(e){ console.warn('Saving failed',e); }
+}
+function loadProgress(){
+  try{
+    const raw=localStorage.getItem(storageKey); if(!raw) return; const o=JSON.parse(raw);
+    const s=atob(o.d); for(let i=0;i<model.n;i++) done[i]=((s.charCodeAt(i>>3)>>(i&7))&1);
+    if(typeof o.layer==='number') layer=Math.min(model.h-1,Math.max(0,o.layer)); onlyLayer=!!o.only;
+    if(o.open in OPEN_MODES) openMode=o.open; if(o.done in DONE_MODES) doneMode=o.done;
+  }catch(e){ console.warn('Loading progress failed',e); }
+}
+
+/* ---------- Material list ---------- */
+function buildMatList(){
+  const list=$('matList'); list.innerHTML=''; typeRows=[]; typeFilter=-1;
+  const order=model.types.map((t,i)=>i).filter(i=>model.types[i].count).sort((a,b)=>model.types[b].count-model.types[a].count);
+  for(const ti of order){
+    const t=model.types[ti]; const row=document.createElement('div'); row.className='mat';
+    row.innerHTML='<span class="sw" style="background:'+colorFor(t.name)+'"></span><span class="nm">'+escapeHtml(t.name)+'</span><span class="cnt"></span>';
+    row.onclick=()=>{ typeFilter=(typeFilter===ti)?-1:ti; typeRows.forEach((r,i)=>r&&r.row.classList.toggle('active',i===typeFilter)); applyView(); };
+    list.appendChild(row); typeRows[ti]={row,cnt:row.querySelector('.cnt')};
+  }
+}
+
+/* ---------- Selection ---------- */
+const ray=new THREE.Raycaster(), ndc=new THREE.Vector2(); let down=null;
+const cv=renderer.domElement;
+cv.addEventListener('pointerdown',e=>{ down={x:e.clientX,y:e.clientY,b:e.button}; });
+cv.addEventListener('pointerup',e=>{ if(!down) return; const moved=Math.hypot(e.clientX-down.x,e.clientY-down.y); const b=down.b; down=null; if(moved<5&&b===0) pick(e); });
+function isVisible(j){
+  const y=model.Y[j]; if(y>layer||(onlyEff()&&y<layer)) return false;
+  if(typeFilter>=0&&model.T[j]!==typeFilter) return false;
+  if(done[j]) return doneMode!=='hide'; return openMode!=='hide';
+}
+function pick(e){
+  if(!model) return; const r=cv.getBoundingClientRect();
+  const locked=document.pointerLockElement===cv||mouseHidden, px=locked?r.left+r.width/2:e.clientX, py=locked?r.top+r.height/2:e.clientY;
+  ndc.set((px-r.left)/r.width*2-1,-((py-r.top)/r.height*2-1)); ray.setFromCamera(ndc,camera);
+  const o=ray.ray.origin,d=ray.ray.direction;
+  const i=pickRay(model,grid,baked,o.x,o.y,o.z,d.x,d.y,d.z,isVisible);
+  if(i<0){ selBox.visible=false; $('toast').style.display='none'; return; }
+  if($('chkMark').checked&&!model.virtual) setMany([i],done[i]?0:1);
+  const b=baked.list[baked.BK[i]].bounds;
+  selBox.position.set(model.X[i]+(b[0]+b[3])/2,model.Y[i]+(b[1]+b[4])/2,model.Z[i]+(b[2]+b[5])/2);
+  selBox.scale.set(Math.max(.05,b[3]-b[0])+.02,Math.max(.05,b[4]-b[1])+.02,Math.max(.05,b[5]-b[2])+.02); selBox.visible=true;
+  const sp=model.stInfo[model.SI[i]]; const props=Object.keys(sp.props).length?'['+Object.entries(sp.props).map(([k,v])=>k+'='+v).join(', ')+']':'';
+  const t=$('toast'); t.style.display='block';
+  t.textContent=sp.name+' '+props+' · X '+model.X[i]+' / Y '+model.Y[i]+' / Z '+model.Z[i]+worldTxt(model.X[i],model.Y[i],model.Z[i])+(model.virtual?'':' · '+(done[i]?'✔ done':'open'));
+}
+
+/* ---------- 2D view (blueprint) ----------
+   Orthographic camera straight from above (north = up, east = right), shows only the selected layer,
+   plus a block grid (yellow = every 16 blocks) and the coordinates under the mouse pointer. */
+const HINT3D=$('hint').textContent;
+const HINT_PHONE='Phone controls: drag: rotate · 2 fingers: pan · pinch/mouse wheel: zoom · WASD/Q/E: fly · tap/click: mark block · PgUp/PgDn: layer · I: Plan/Current';
+function updateHint(){ if(!view2d) $('hint').textContent=phoneMode?HINT_PHONE:HINT3D; }
+function frame2D(){
+  if(!view2d) return;
+  const m=model, w=view.clientWidth||1, h=view.clientHeight||1, asp=w/h;
+  const W=m?m.w:20, D=m?m.d:20, Hh=m?m.h:10;
+  const hh=Math.max(D*1.08/2, W*1.08/2/asp, 2);
+  ortho.top=hh; ortho.bottom=-hh; ortho.left=-hh*asp; ortho.right=hh*asp; ortho.zoom=1; ortho.near=0.1; ortho.far=Hh+60;
+  controls.target.set(W/2,0,D/2); ortho.position.set(W/2,Hh+20,D/2+0.001);
+  ortho.updateProjectionMatrix(); controls.update();
+}
+function set2D(on){
+  on=!!on; if(on===view2d) return;
+  if(on){
+    if(phoneMode) lookAtPoint(controls.target.x,controls.target.y,controls.target.z);
+    saved3d={p:persp.position.clone(),yaw,pitch};
+    setMouseHidden(false);
+    view2d=true; camera=ortho; controls.object=ortho; controls.enabled=true; ortho.up.set(0,0,-1);
+    controls.enableRotate=false; controls.minPolarAngle=0; controls.maxPolarAngle=0;
+    controls.mouseButtons.LEFT=THREE.MOUSE.PAN; controls.touches.ONE=THREE.TOUCH.PAN;
+    renderer.setClearColor(0x1b2433); $('hint').textContent='2D plan: drag: pan · pinch/mouse wheel: zoom · PgUp/PgDn or slider: change layer · tap/click: mark block · F: fit · 2: back to 3D';
+    $('chkOnly').checked=true; $('chkOnly').disabled=true;
+  }else{
+    view2d=false; camera=persp; controls.object=persp; controls.enabled=phoneMode;
+    controls.enableRotate=true; controls.minPolarAngle=0; controls.maxPolarAngle=Math.PI;
+    controls.mouseButtons.LEFT=THREE.MOUSE.ROTATE; controls.touches.ONE=THREE.TOUCH.ROTATE;
+    if(saved3d){ persp.position.copy(saved3d.p); yaw=saved3d.yaw; pitch=saved3d.pitch; applyLook(); }
+    if(phoneMode) syncOrbitFromCam();
+    renderer.setClearColor(0x8fb8e8); updateHint();
+    $('chkOnly').checked=onlyLayer; $('chkOnly').disabled=false; $('hud2d').textContent='';
+  }
+  $('chk2d').checked=view2d; document.body.classList.toggle('mode2d',view2d);
+  if(gridFine) gridFine.visible=view2d; if(gridMajor) gridMajor.visible=view2d;
+  if(view2d) frame2D();
+  resize(); sortDirty=true; if(model) applyView();
+}
+function disposeGrid(){ for(const g of [gridFine,gridMajor]) if(g){ scene.remove(g); g.geometry.dispose(); g.material.dispose(); } gridFine=gridMajor=null; }
+function buildGrid(){
+  disposeGrid(); if(!model) return;
+  const w=model.w, d=model.d, fine=[], major=[];
+  for(let x=0;x<=w;x++) (x%16===0||x===w?major:fine).push(x,0,0,x,0,d);
+  for(let z=0;z<=d;z++) (z%16===0||z===d?major:fine).push(0,0,z,w,0,z);
+  const mk=(arr,color,op)=>{ const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(arr),3));
+    const l=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color,transparent:true,opacity:op,depthWrite:false})); l.renderOrder=2; l.visible=view2d; l.frustumCulled=false; scene.add(l); return l; };
+  gridFine=mk(w+d>1500?[]:fine,0xffffff,0.22); gridMajor=mk(major,0xffd34d,0.75); updateGridY();
+}
+function updateGridY(){ const y=layer+1.004; if(gridFine) gridFine.position.y=y; if(gridMajor) gridMajor.position.y=y; }
+cv.addEventListener('pointermove',e=>{
+  if(!view2d||!model) return; const r=cv.getBoundingClientRect();
+  ndc.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height*2-1)); ray.setFromCamera(ndc,camera);
+  const o=ray.ray.origin, x=Math.floor(o.x), z=Math.floor(o.z), hud=$('hud2d');
+  if(x<0||z<0||x>=model.w||z>=model.d){ hud.textContent='Layer '+(layer+1)+' (Y '+layer+')'; return; }
+  const j=grid.at(x,layer,z);
+  hud.textContent='X '+x+' · Z '+z+' · Y '+layer+worldTxt(x,layer,z)+' · '+(j>=0?model.stInfo[model.SI[j]].name:'empty');
+});
+
+/* ---------- UI wiring ---------- */
+// No .click() on inputs: the (invisible) inputs sit directly over the buttons and are tapped by the user themselves.
+$('fileInput').onchange=e=>{ const fl=Array.from(e.target.files||[]); e.target.value=''; if(fl.length) handleFiles(fl); };
+$('btnDemo').onclick=()=>{ setPlan(demoModel()); idbPut('last',{demo:true}).catch(()=>{}); };
+$('btnFit').onclick=fit;
+$('layerRange').oninput=e=>setLayer(+e.target.value);
+$('btnUp').onclick=()=>setLayer(layer+1); $('btnDown').onclick=()=>setLayer(layer-1);
+$('chkOnly').onchange=e=>{ onlyLayer=e.target.checked; applyView(); scheduleSave(); };
+$('selOpen').onchange=e=>{ openMode=e.target.value; applyView(); scheduleSave(); };
+$('selDone').onchange=e=>{ doneMode=e.target.value; applyView(); scheduleSave(); };
+$('btnLayerDone').onclick=()=>model&&setMany(idsWhere(y=>y===layer),1);
+$('btnUpToDone').onclick=()=>model&&setMany(idsWhere(y=>y<=layer),1);
+$('btnLayerReset').onclick=()=>model&&setMany(idsWhere(y=>y===layer),0);
+$('btnUndo').onclick=undo;
+$('chk2d').onchange=e=>set2D(e.target.checked);
+$('selMip').value=String(mipLevels);
+$('selMip').onchange=e=>{ mipLevels=+e.target.value; try{ localStorage.setItem('mcbuild:mip',String(mipLevels)); }catch(_){} U.uMipMax.value=mipLevels; };
+$('selTrans').value=transMode;
+$('selTrans').onchange=e=>{ transMode=e.target.value; try{ localStorage.setItem('mcbuild:trans',transMode); }catch(_){}
+  for(const gs of [base,filt]) if(gs&&gs.meshT){ gs.meshT.material.dispose(); gs.meshT.material=makeMaterial(atlasTex,true); } };
+$('chkDouble').checked=dblSide;
+$('chkDouble').onchange=e=>{ dblSide=e.target.checked; try{ localStorage.setItem('mcbuild:dbl',dblSide?'1':'0'); }catch(_){} applySide(); };
+$('btnReset').onclick=()=>{ if(model&&confirm('Reset the entire build progress for this model?')){ setMany(idsWhere(()=>true),0,false); history.length=0; } };
+
+const keys=new Set();
+const typing=e=>/^(INPUT|SELECT|TEXTAREA)$/.test((e.target&&e.target.tagName)||'')&&e.target.type!=='checkbox'&&e.target.type!=='range';
+addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.code==='KeyZ'){ undo(); e.preventDefault(); return; }
+  if(e.code==='PageUp'){ setLayer(layer+1); e.preventDefault(); return; }
+  if(e.code==='PageDown'){ setLayer(layer-1); e.preventDefault(); return; }
+  if(e.code==='Escape'){ if(mouseHidden) setMouseHidden(false); selBox.visible=false; $('toast').style.display='none'; return; }
+  if(e.code==='KeyF'){ fit(); return; }
+  if(e.code==='Digit2'){ set2D(!view2d); return; }
+  if(e.code==='KeyL'){ setMouseHidden(!mouseHidden); return; }
+  if(e.code==='KeyI'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&e.target.id!=='liveCode'){ togglePlanCurrent(); e.preventDefault(); return; }   // even if a number field currently has focus
+  if(typing(e)) return;
+  if(!view2d&&(e.code==='Space'||e.code.startsWith('Arrow'))) e.preventDefault();
+  keys.add(e.code);
+});
+addEventListener('keyup',e=>keys.delete(e.code));
+addEventListener('blur',()=>keys.clear());
+let speedTimer=0;
+function flash(t){ const h=$('speedHud'); h.textContent=t; h.style.display='block'; clearTimeout(speedTimer); speedTimer=setTimeout(()=>{ h.style.display='none'; },1600); }
+function showSpeed(){ flash('Flight speed ×'+flySpeed.toFixed(flySpeed<1?2:1)); }
+function baseSpeed(){ const s=model?Math.max(model.w,model.h,model.d):20; return Math.max(6,s*0.35); }
+function moveLocal(f,r,u){   // f forward (horizontal), r right, u up – in blocks
+  const sy=Math.sin(yaw), cy=Math.cos(yaw);
+  persp.position.x+=-sy*f+cy*r; persp.position.z+=-cy*f-sy*r; persp.position.y+=u;
+}
+/** Phone controls: put the orbit target back in front of the camera (from position + view direction) */
+function syncOrbitFromCam(){
+  const cx=model?model.w/2:0, cy=model?model.h/2:0, cz=model?model.d/2:0, p=persp.position;
+  const dist=Math.max(5,Math.hypot(cx-p.x,cy-p.y,cz-p.z));
+  controls.target.set(p.x-Math.sin(yaw)*Math.cos(pitch)*dist, p.y+Math.sin(pitch)*dist, p.z-Math.cos(yaw)*Math.cos(pitch)*dist);
+  controls.update();
+}
+function setPhone(on){
+  on=!!on; phoneMode=on; try{ localStorage.setItem('mcbuild:phone',on?'1':'0'); }catch(_){}
+  $('chkPhone').checked=on;
+  if(on) setMouseHidden(false);
+  if(!view2d){
+    if(on){ controls.enabled=true; syncOrbitFromCam(); }
+    else { controls.enabled=false; lookAtPoint(controls.target.x,controls.target.y,controls.target.z); }
+  }
+  updateHint();
+}
+function fly(dt){
+  if(view2d||!keys.size) return;
+  let f=0,r=0,u=0;
+  if(keys.has('KeyW')) f++; if(keys.has('KeyS')) f--; if(keys.has('KeyD')) r++; if(keys.has('KeyA')) r--;
+  if(keys.has('Space')||keys.has('KeyE')) u++; if(keys.has('ShiftLeft')||keys.has('ShiftRight')||keys.has('KeyQ')) u--;
+  const n=Math.hypot(f,r,u), sprint=(keys.has('ControlLeft')||keys.has('ControlRight'))?3:1;
+  if(phoneMode){   // classic: along the view direction (incl. tilt), target moves along
+    if(!n) return;
+    const p=persp.position, t=controls.target; let fx=t.x-p.x, fy=t.y-p.y, fz=t.z-p.z; const fl=Math.hypot(fx,fy,fz)||1; fx/=fl; fy/=fl; fz/=fl;
+    let rx=-fz, rz=fx; const rl=Math.hypot(rx,rz)||1; rx/=rl; rz/=rl;
+    const sp=baseSpeed()*sprint*dt/n, mx=(fx*f+rx*r)*sp, my=(fy*f+u)*sp, mz=(fz*f+rz*r)*sp;
+    p.x+=mx; p.y+=my; p.z+=mz; t.x+=mx; t.y+=my; t.z+=mz; return;
+  }
+  if(n){ const sp=baseSpeed()*flySpeed*sprint*dt/n; moveLocal(f*sp,r*sp,u*sp); }
+  const ly=(keys.has('ArrowLeft')?1:0)-(keys.has('ArrowRight')?1:0), lp=(keys.has('ArrowUp')?1:0)-(keys.has('ArrowDown')?1:0);
+  if(ly||lp){ yaw+=ly*1.8*dt; pitch+=lp*1.4*dt; applyLook(); }
+}
+/** Hide the mouse completely (key L): pointer invisible – even over the menu –, camera follows the mouse everywhere.
+    If possible with pointer lock as well (then unlimited turning), otherwise fall back to plain mouse movement. */
+function setMouseHidden(on){
+  on=!!on&&!view2d&&!phoneMode; if(on===mouseHidden) return;
+  mouseHidden=on; document.body.classList.toggle('nomouse',on); $('chkLock').checked=on;
+  hoverPaused=!on;   // visible pointer: camera stays still until the mouse is hidden/captured again
+  if(on){
+    try{ const r=cv.requestPointerLock&&cv.requestPointerLock(); if(r&&r.catch) r.catch(()=>{}); }catch(_){}
+    flash('Mouse hidden – key L or Esc ends it');
+  }else{
+    lockActive=false; if(document.pointerLockElement) document.exitPointerLock();
+  }
+}
+document.addEventListener('pointerlockchange',()=>{
+  if(document.pointerLockElement===cv) lockActive=true;
+  else if(lockActive&&mouseHidden) setMouseHidden(false);   // Esc in the browser releases the lock -> end the mode
+});
+let lockT=0;   // time of the last lock change (ignore entry jumps)
+document.addEventListener('pointerlockchange',()=>{ lockT=performance.now(); });
+/** Jump filter: browsers (mainly Chrome) occasionally deliver single huge movementX/Y values with pointer lock
+    (when locking in, under high load, at the window edge). Such outliers are discarded instead of "snapping" the camera. */
+const MAXJUMP=220;
+window.addEventListener('pointermove',e=>{
+  if(!mouseHidden||view2d||phoneMode) return;
+  if(performance.now()-lockT<120) return;
+  let evs=[e]; try{ if(e.getCoalescedEvents){ const c=e.getCoalescedEvents(); if(c&&c.length) evs=c; } }catch(_){}
+  const k=document.pointerLockElement===cv?0.0022:0.0045;
+  let dx=0,dy=0;
+  for(const q of evs){
+    const mx=q.movementX||0, my=q.movementY||0;
+    if(Math.abs(mx)>MAXJUMP||Math.abs(my)>MAXJUMP) continue;   // outlier
+    dx+=mx; dy+=my;
+  }
+  if(dx||dy) look(dx*k,dy*k);
+});
+// mouse/touch: drag = look around, two fingers = fly
+const ptrs=new Map();
+cv.addEventListener('pointerdown',e=>{ if(view2d||phoneMode) return;
+  if(hoverLook&&e.pointerType==='mouse'&&!mouseHidden) setMouseHidden(true);
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); try{ cv.setPointerCapture(e.pointerId); }catch(_){} });
+const endPtr=e=>{ ptrs.delete(e.pointerId); };
+cv.addEventListener('pointerup',endPtr); cv.addEventListener('pointercancel',endPtr); cv.addEventListener('lostpointercapture',endPtr);
+cv.addEventListener('pointermove',e=>{
+  if(view2d||phoneMode||mouseHidden) return;
+  if(hoverLook&&!hoverPaused&&e.pointerType==='mouse'){ const mx=e.movementX||0,my=e.movementY||0; if(Math.abs(mx)<=MAXJUMP&&Math.abs(my)<=MAXJUMP) look(mx*0.0045,my*0.0045); return; }   // look without clicking
+  const p=ptrs.get(e.pointerId); if(!p) return;
+  const dx=e.clientX-p.x, dy=e.clientY-p.y;
+  if(ptrs.size===1){ look(dx*0.0045,dy*0.0045); }
+  else if(ptrs.size===2){
+    let o=null; for(const [id,q] of ptrs) if(id!==e.pointerId) o=q;
+    const d0=Math.hypot(p.x-o.x,p.y-o.y), d1=Math.hypot(e.clientX-o.x,e.clientY-o.y), k=baseSpeed()/90;
+    const dirx=-Math.sin(yaw)*Math.cos(pitch), diry=Math.sin(pitch), dirz=-Math.cos(yaw)*Math.cos(pitch), mf=(d1-d0)*k*0.5;
+    persp.position.x+=dirx*mf; persp.position.y+=diry*mf; persp.position.z+=dirz*mf;   // pinch: along the view direction
+    moveLocal(0,-dx*k*0.25,dy*k*0.25);                                                     // drag: sideways / up-down
+  }
+  p.x=e.clientX; p.y=e.clientY;
+});
+cv.addEventListener('wheel',e=>{ if(view2d||phoneMode) return; e.preventDefault(); flySpeed=clamp(flySpeed*Math.pow(1.0018,-e.deltaY),0.1,25); showSpeed(); },{passive:false});
+$('chkHover').checked=hoverLook;
+$('chkHover').onchange=e=>{ hoverLook=e.target.checked; hoverPaused=false; try{ localStorage.setItem('mcbuild:hover',hoverLook?'1':'0'); }catch(_){} };
+$('rngSens').value=sens; $('sensVal').textContent=sens.toFixed(2)+'×';
+$('rngSens').oninput=e=>{ sens=+e.target.value; $('sensVal').textContent=sens.toFixed(2)+'×'; try{ localStorage.setItem('mcbuild:sens',String(sens)); }catch(_){} };
+$('chkLock').onchange=e=>setMouseHidden(e.target.checked);
+$('chkPhone').checked=phoneMode; $('chkPhone').onchange=e=>setPhone(e.target.checked);
+if(phoneMode){ controls.enabled=true; updateHint(); }
+
+/* ====================================================================
+   Plan/Current views and live sync with the Minecraft mod
+   Plan = the building plan (never changed, only hand marks). Current = current state, exactly as the mod releases it.
+   In the current view nothing is marked, coloured or compared.
+   ==================================================================== */
+let planModel=null, shown='plan';
+const PL={corner:'nw',x:0,y:64,z:0,rot:0,mir:false,set:false};
+const LIVE={pvId:0,pvReq:null,pv:null,pvCur:false,pvGot:false,pvLive:false,pvPlaced:null,ws:null,phase:'off',port:0,code:'',pal:[],current:null,currentReady:false,status:null,want:false,timer:0,ping:0,awaitCurrent:false,adopted:false};
+let hideFill=false; try{ hideFill=localStorage.getItem('mcbuild:hidefill')==='1'; }catch(e){}
+const placedCache={key:'',m:null};
+function placedPlan(){ if(!planModel) return null; const k=modelKey(planModel)+'|'+PL.rot+'|'+PL.mir; if(placedCache.key!==k){ placedCache.key=k; placedCache.m=placeModel(planModel,PL.rot,PL.mir); } return placedCache.m; }
+function curMin(){ const m=placedPlan(); if(!m) return null; const c=minCorner(PL.corner,PL.x,PL.z,m.w,m.d); return {x:c.x,y:PL.y,z:c.z,sx:m.w,sy:m.h,sz:m.d}; }
+function worldTxt(x,y,z){
+  if(!model) return '';
+  if(model.virtual&&model.origin) return ' · World X '+(model.origin[0]+x)+' / Y '+(model.origin[1]+y)+' / Z '+(model.origin[2]+z);
+  if(!PL.set) return ''; const c=curMin(); return c?' · World X '+(c.x+x)+' / Y '+(c.y+y)+' / Z '+(c.z+z):'';
+}
+const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),new THREE.LineBasicMaterial({color:0xffd34d,transparent:true,opacity:.85}));
+outline.visible=false; outline.frustumCulled=false; scene.add(outline);
+function setOutline(w,h,d,x0=0,y0=0,z0=0){ if(!w){ outline.visible=false; return; } outline.position.set(x0+w/2,y0+h/2,z0+d/2); outline.scale.set(w,h,d); outline.visible=true; }
+const plKey=()=>planModel?'mcbuild:place:'+modelKey(planModel):'';
+function savePL(){ try{ if(planModel) localStorage.setItem(plKey(),JSON.stringify({corner:PL.corner,x:PL.x,y:PL.y,z:PL.z,rot:PL.rot,mir:PL.mir})); }catch(e){} }
+function loadPL(){ PL.set=false; PL.rot=0; PL.mir=false;
+  try{ const o=JSON.parse(localStorage.getItem(plKey())||'null'); if(o){ PL.corner=o.corner||'nw'; PL.x=o.x|0; PL.y=o.y|0; PL.z=o.z|0; PL.rot=((o.rot|0)%4+4)%4; PL.mir=!!o.mir; PL.set=true; } }catch(e){} syncPlFields(); }
+function syncPlFields(){ $('plCorner').value=PL.corner; $('plRot').value=String(PL.rot); $('plX').value=PL.x; $('plY').value=PL.y; $('plZ').value=PL.z; $('plMir').checked=PL.mir; }
+
+async function setPlan(m){ planModel=m; placedCache.key=''; loadPL(); shown='plan'; await showPlan({}); updateLiveUI(); }
+async function showPlan(o){
+  if(!planModel) return;
+  if(model&&!model.virtual) saveProgress();
+  const fromPv=shown==='pv'; shown='plan'; const m=placedPlan();
+  await setModel(m,{keepCamera:o.keepCamera&&!fromPv,keepView:o.keepView,quiet:o.quiet});
+  setOutline(0); updateTabs();
+}
+async function showCurrent(o){
+  const st=LIVE.current; if(!st||!LIVE.currentReady) return;
+  const r=storeToModel(st,LIVE.pal,{hideFill,name:'Current'});
+  if(!r.model){
+    let cols=0; for(let i=0;i<st.g.length;i++) if(st.g[i]!==GUNK) cols++;
+    let t;
+    if(hideFill&&cols) t='Without the underground there is nothing to see here – turn off "Hide underground" or build/dig something in the build area first.';
+    else if(!cols) t='The mod has not delivered any ground data yet (0 columns). Are the chunks loaded? The chunk counter above must rise, otherwise you are too far away or in another dimension.';
+    else t='Nothing is in the build area yet: it lies above the ground ('+cols+' columns read) and is empty. As soon as you place blocks there, they appear. If the plan lies lower, the ground is shown as underground – check the Y height with "Preview".';
+    plMsg(t,'warnTxt'); flash('Current state: nothing is built in the build area yet');
+    if(shown==='plan') setOutline(st.s[0],st.s[1],st.s[2]);   // show the frame of the build area (same coordinates as the plan)
+    return; }
+  if(model&&!model.virtual) saveProgress();
+  const fromPv=shown==='pv'; shown='current';
+  await setModel(r.model,{keepCamera:o.keepCamera&&!fromPv,keepView:o.keepView,quiet:o.quiet});
+  if(shown==='current'){ setOutline(st.s[0],st.s[1],st.s[2]); }
+  updateTabs();
+}
+/* ---------- Surroundings preview (before confirming) ---------- */
+let pvTimer=0, pvRetry=0, pvBuildT=0, pvBusy=false;
+function requestPreview(){
+  const c=curMin(); if(!c||LIVE.phase!=='on'||(LIVE.status&&LIVE.status.active)) return;
+  const err=Placement_checkSize(c.sx,c.sy,c.sz); if(err){ plMsg(err,'errTxt'); return; }
+  const id=++LIVE.pvId, margin=Math.max(0,Math.min(24,Math.trunc(+$('plMargin').value)||0));
+  LIVE.pvReq={id,x:c.x,y:c.y,z:c.z,rot:PL.rot,mir:PL.mir,margin,tries:(LIVE.pvReq&&LIVE.pvReq.same)?LIVE.pvReq.tries+1:0,same:true};
+  wsSend({t:'preview',id,x:c.x,y:c.y,z:c.z,sx:c.sx,sy:c.sy,sz:c.sz,margin});
+  plMsg('Loading surroundings …'); clearTimeout(pvRetry);
+  // The mod silently drops requests that come too fast (< 250 ms) – then ask again
+  pvRetry=setTimeout(()=>{ if(LIVE.pvReq&&LIVE.pvReq.id===id&&!LIVE.pvGot){ if(LIVE.pvReq.tries<4) requestPreview(); else plMsg('No answer from the mod (are you in a world and near the build site?).','errTxt'); } },1500);
+  LIVE.pvGot=false; LIVE.pvLive=true;
+}
+function schedulePreview(){ if(!LIVE.pvLive||LIVE.phase!=='on') return; clearTimeout(pvTimer); pvTimer=setTimeout(()=>{ if(LIVE.pvReq) LIVE.pvReq.same=false; requestPreview(); },500); }
+function pvInfo(r){
+  const st=LIVE.pv.store, q=LIVE.pv.req, c=curMin()||q, cx=Math.floor((q.x+(LIVE.pvPlaced?LIVE.pvPlaced.w:1)/2)-st.o[0]), cz=Math.floor((q.z+(LIVE.pvPlaced?LIVE.pvPlaced.d:1)/2)-st.o[2]);
+  const g=groundAt(st,cx,cz); let t='';
+  if(g!==null){ const gy=st.o[1]+g, d=q.y-gy; t+='Ground in the middle: Y '+gy+' · plan bottom Y '+q.y+' ('+(d===0?'at ground level':d>0?d+' above the ground':(-d)+' below the ground')+'). '; }
+  if(r.overlap) t+=r.overlap+' plan blocks lie inside the terrain (they are dug out or replaced).';
+  return t||'Preview loaded.';
+}
+async function showPv(o){
+  const pv=LIVE.pv; if(!pv||!planModel) return;
+  const q=pv.req, placed=placeModel(planModel,q.rot,q.mir); LIVE.pvPlaced=placed;
+  const ox=q.x-pv.store.o[0], oy=q.y-pv.store.o[1], oz=q.z-pv.store.o[2];
+  const r=storeToModel(pv.store,LIVE.pal,{name:'Preview',plan:{m:placed,ox,oy,oz}});
+  if(!r.model) return;
+  if(model&&!model.virtual) saveProgress();
+  const first=shown!=='pv'; shown='pv';
+  await setModel(r.model,{keepCamera:!first&&o.keepCamera,keepView:!first,quiet:o.quiet});
+  if(shown==='pv'){ setOutline(placed.w,placed.h,placed.d,ox,oy,oz); plMsg(pvInfo(r)); }
+  updateTabs();
+}
+function schedulePvShow(now){ if(shown!=='pv'&&!now) return; clearTimeout(pvBuildT); pvBuildT=setTimeout(async()=>{ if(pvBusy){ schedulePvShow(); return; } pvBusy=true; try{ await showPv({keepCamera:true,quiet:true}); }catch(e){ console.warn(e); } finally{ pvBusy=false; } },now?0:1200); }
+async function refreshView(){ if(shown==='pv'&&LIVE.pv) await showPv({keepCamera:true}); else if(shown==='current'&&LIVE.current&&LIVE.currentReady) await showCurrent({keepCamera:true,keepView:true}); else await showPlan({keepCamera:true,keepView:true}); }
+function togglePlanCurrent(){
+  if(shown==='pv'){ showPlan({keepCamera:true,keepView:true}); flash('View: Planned state'); }
+  else if(shown==='plan'){ if(LIVE.current&&LIVE.currentReady){ showCurrent({keepCamera:true,keepView:true}); flash('View: Current state'); } else flash('No current state yet – connect and confirm the position first'); }
+  else{ showPlan({keepCamera:true,keepView:true}); flash('View: Planned state'); }
+}
+let currentTimer=0, currentBusy=false, currentAgain=false;
+function scheduleCurrent(now){ if(shown!=='current'||!LIVE.currentReady) return; clearTimeout(currentTimer); currentTimer=setTimeout(runCurrent,now?0:1200); }
+async function runCurrent(){
+  if(currentBusy){ currentAgain=true; return; } currentBusy=true;
+  try{ await showCurrent({keepCamera:true,keepView:true,quiet:true}); } catch(e){ console.warn(e); }
+  finally{ currentBusy=false; if(currentAgain){ currentAgain=false; scheduleCurrent(); } }
+}
+function updateTabs(){
+  const tabs=$('viewTabs'); tabs.classList.toggle('on',LIVE.phase==='on'||!!LIVE.current);
+  for(const b of tabs.querySelectorAll('button')){
+    const v=b.dataset.v; b.classList.toggle('active',v===shown);
+    b.disabled=(v==='plan'&&!planModel)||(v==='current'&&!(LIVE.current&&LIVE.currentReady))||(v==='pv'&&!LIVE.pv);
+  }
+}
+$('viewTabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b||b.disabled) return; const v=b.dataset.v;
+  if(v==='plan'&&shown!=='plan') showPlan({keepCamera:true,keepView:true}); else if(v==='current'&&shown!=='current') showCurrent({keepCamera:true,keepView:true}); else if(v==='pv'&&shown!=='pv') showPv({keepCamera:false}); });
+
+/* ---------- Connection ---------- */
+/** Where is the mod? Default: this computer (127.0.0.1). If this page was served by the mod over the network (http://PC-IP:port),
+    that address is used. Optionally the user can type another address of the home network (private addresses only). */
+const isPrivateIp=h=>/^(10\.|192\.168\.|169\.254\.|127\.|172\.(1[6-9]|2[0-9]|3[01])\.)\d{1,3}\.\d{1,3}(\.\d{1,3})?$/.test(h)||/^\[(fd|fc|fe80)[0-9a-f:]*\]$/i.test(h);
+const SERVED=(()=>{ const l=location; const h=l.hostname; const hh=h.indexOf(':')>=0&&h[0]!=='['?'['+h+']':h; if(l.protocol==='http:'&&h&&h!=='localhost'&&h!=='127.0.0.1'&&hh!=='[::1]'&&isPrivateIp(hh)) return {host:hh,port:+l.port||80}; return null; })();   // only a page served from a private address counts (never send the code to a public host)
+function liveTarget(){
+  if(SERVED) return {host:SERVED.host,ports:[SERVED.port],remote:true,why:'served'};
+  const raw=($('liveHost').value||'').trim().replace(/^(ws|http)s?:\/\//,'').replace(/\/.*$/,'');
+  if(raw){
+    const m=/^(\[[0-9a-fA-F:]+\]|[0-9.]+)(?::(\d{1,5}))?$/.exec(raw);
+    if(!m||!isPrivateIp(m[1])||(m[2]&&(+m[2]<1||+m[2]>65535))) return {error:'Please enter a private network address like 192.168.1.20 or 192.168.1.20:38517 (no names, no internet addresses).'};
+    const ports=m[2]?[+m[2]]:Array.from({length:20},(_,i)=>38517+i);
+    return {host:m[1],ports,remote:true,why:'typed'};
+  }
+  return {host:'127.0.0.1',ports:null,remote:false};
+}
+const NET_WARNING='WARNING – network connection\n\n• The connection to the PC is NOT encrypted. Anyone in this network could read the filtered build data and try the pairing code.\n• Only continue on a network you trust (your own home network), never on public Wi-Fi.\n• It is never opened to the internet; LAN mode in the game can be switched off with /buildsync lan off.\n\nContinue?';
+function updateNetWarn(){ const t=liveTarget(); $('liveWarn').style.display=(t.remote&&!t.error)?'block':'none'; }
+const BLOCKED_MSG='The browser does not allow this page to connect to the mod (e.g. in the Claude app or on an https page). Open index.html as a local file in Chrome, Edge or Firefox on the PC where Minecraft is running – or, on a phone, open the address shown by /buildsync lan in the phone browser.';
+function liveSay(t,cls){ const e=$('liveState'); e.textContent=t; e.className='dim '+(cls||''); }
+const wsSend=o=>{ const w=LIVE.ws; if(w&&w.readyState===1) w.send(JSON.stringify(o)); };
+function closeWs(){ clearInterval(LIVE.ping); const w=LIVE.ws; LIVE.ws=null; if(w){ w.onclose=null; try{ w.close(); }catch(e){} } }
+function liveConnect(){
+  const code=normCode($('liveCode').value);
+  if(!/^[0-9A-Z]{12}$/.test(code)){ liveSay('Please enter the 12-character code (e.g. AB12-CD34-EF56).','errTxt'); return; }
+  try{ localStorage.setItem('mcbuild:code',fmtCode(code)); }catch(e){}
+  LIVE.code=code; LIVE.want=true; liveScan();
+}
+function liveDisconnect(){
+  LIVE.want=false; clearTimeout(LIVE.timer); closeWs(); LIVE.phase='off'; LIVE.status=null; LIVE.adopted=false;
+  liveSay('Disconnected.'); if(shown==='current'||shown==='pv') showPlan({keepCamera:true,keepView:true}); LIVE.current=null; LIVE.currentReady=false; LIVE.pv=null; LIVE.pvLive=false; updateLiveUI();
+}
+async function liveScan(){
+  if(LIVE.phase==='scan'||LIVE.phase==='on') return;
+  const tg=liveTarget();
+  if(tg.error){ LIVE.want=false; liveSay(tg.error,'errTxt'); return; }
+  if(tg.remote&&LIVE.okNet!==tg.host){   // ask once per address before the pairing code is sent over the network
+    if(!confirm(NET_WARNING)){ LIVE.want=false; liveSay('Cancelled – nothing was sent.','warnTxt'); return; }
+    LIVE.okNet=tg.host;
+  }
+  LIVE.phase='scan'; updateLiveUI(); liveSay(tg.remote?'Looking for the mod at '+tg.host+' …':'Looking for the mod …');
+  const ports=[]; if(tg.ports){ for(const p of tg.ports) ports.push(p); } else { if(LIVE.port) ports.push(LIVE.port); for(let p=38517;p<=38536;p++) if(p!==LIVE.port) ports.push(p); }
+  let authErr=null, sawMod=false;
+  for(const p of ports){
+    if(!LIVE.want) break;
+    const r=await tryPort(tg.host,p);
+    if(r.ok) return;
+    if(r.blocked){ LIVE.phase='off'; LIVE.want=false; liveSay(BLOCKED_MSG,'errTxt'); updateLiveUI(); return; }
+    if(r.mod) sawMod=true; if(r.err) authErr=r.err;
+  }
+  LIVE.phase='off'; updateLiveUI(); if(!LIVE.want) return;
+  if(authErr){
+    LIVE.want=false;
+    liveSay(authErr.reason==='locked'?'Too many wrong attempts – locked, please try again in '+Math.ceil((authErr.retryMs||30000)/1000)+' s.':'Wrong code. In game, /buildsync code shows the right one.','errTxt');
+  }else{
+    liveSay(sawMod?'Mod found, but the connection was interrupted. Trying again …':(tg.remote?'Could not reach the mod at '+tg.host+'. Is Minecraft running, and is LAN mode on? In game: /buildsync lan on, then /buildsync lan confirm. (Retrying.)':'No mod found. Is Minecraft running with BuildSync? (Retrying. On a phone: use the network option – see "Advanced" – or open the address shown by /buildsync lan.)'),'warnTxt');
+    LIVE.timer=setTimeout(liveScan,4000);
+  }
+}
+/** The code is only sent after the server has identified itself as the BuildSync mod with a valid "hello" – it is never shown to other local programs. */
+function tryPort(host,p){ return new Promise(res=>{
+  let ws,done=false,mod=false,to;
+  const fin=r=>{ if(done) return; done=true; clearTimeout(to); if(!r.ok){ try{ ws&&ws.close(); }catch(e){} } res(r); };
+  try{ ws=new WebSocket('ws://'+host+':'+p); }catch(e){ fin({blocked:true}); return; }
+  to=setTimeout(()=>fin({mod}),2500); ws.onerror=()=>fin({mod}); ws.onclose=()=>fin({mod});
+  ws.onmessage=ev=>{ let m; try{ m=JSON.parse(ev.data); }catch(e){ return; }
+    if(m&&m.t==='hello'&&m.v===1&&m.auth===true){ mod=true; ws.send(JSON.stringify({t:'auth',code:LIVE.code})); }
+    else if(m&&m.t==='auth.ok'){ adopt(ws,p,host); fin({ok:true,mod:true}); }
+    else if(m&&m.t==='auth.err'){ fin({mod:true,err:m}); } };
+}); }
+function adopt(ws,p,host){
+  LIVE.ws=ws; LIVE.port=p; LIVE.phase='on'; LIVE.pal=[]; LIVE.current=null; LIVE.currentReady=false; LIVE.status=null; LIVE.adopted=false;
+  ws.onmessage=ev=>{ try{ onLive(JSON.parse(ev.data)); }catch(e){ console.warn('Live message',e); } };
+  ws.onclose=()=>{ if(LIVE.ws!==ws) return; LIVE.ws=null; LIVE.phase='off'; clearInterval(LIVE.ping); updateLiveUI();
+    if(LIVE.want){ liveSay('Connection lost – reconnecting …','warnTxt'); LIVE.timer=setTimeout(liveScan,2500); } };
+  clearInterval(LIVE.ping); LIVE.ping=setInterval(()=>wsSend({t:'ping'}),15000);
+  liveSay(host&&host!=='127.0.0.1'?'Connected to '+host+':'+p+' (network, not encrypted).':'Connected (port '+p+').','okTxt'); updateLiveUI();
+}
+function plMsg(t,cls){ const e=$('plMsg'); e.textContent=t; e.className='dim '+(cls||''); }
+function onLive(m){
+  switch(m.t){
+    case 'status': LIVE.status=m; adoptStatusPlace(m); updateLiveUI(); break;
+    case 'pal': if(Array.isArray(m.i)&&Array.isArray(m.list)) for(let k=0;k<m.i.length;k++) LIVE.pal[m.i[k]]=String(m.list[k]); break;
+    case 'current.begin': try{ LIVE.current=new CellStore(m.origin,m.size); LIVE.currentReady=false; }catch(e){ LIVE.current=null; } break;
+    case 'current.set': if(LIVE.current){ LIVE.current.set(m.b||[]); if(LIVE.currentReady) scheduleCurrent();
+      if(LIVE.awaitCurrent){ clearTimeout(LIVE.autoT); LIVE.autoT=setTimeout(()=>{ if(LIVE.awaitCurrent&&LIVE.currentReady){ LIVE.awaitCurrent=false; showCurrent({keepCamera:false}); } },900); } } break;   // the mod delivers the chunk data after place.ok
+    case 'current.ground': if(LIVE.current) LIVE.current.ground(m); break;
+    case 'current.end':
+      if(LIVE.current){ LIVE.currentReady=true; updateTabs();
+        if(LIVE.awaitCurrent){ LIVE.awaitCurrent=false; showCurrent({keepCamera:false}); } else if(shown==='current') scheduleCurrent(true); }
+      updateLiveUI(); break;
+    case 'pv.begin':
+      if(LIVE.pvReq&&m.id===LIVE.pvReq.id){ try{ LIVE.pv={id:m.id,store:new CellStore(m.origin,m.size),req:LIVE.pvReq,done:false}; LIVE.pvCur=true; LIVE.pvGot=true; clearTimeout(pvRetry); }catch(e){ LIVE.pvCur=false; } } else LIVE.pvCur=false; break;
+    case 'pv.set': if(LIVE.pvCur&&LIVE.pv){ LIVE.pv.store.set(m.b||[]); if(shown==='pv') schedulePvShow(); } break;
+    case 'pv.ground': if(LIVE.pvCur&&LIVE.pv) LIVE.pv.store.ground(m); break;
+    case 'pv.done': if(LIVE.pvCur&&LIVE.pv&&m.id===LIVE.pv.id){ LIVE.pv.done=true; LIVE.pvCur=false; schedulePvShow(true); } break;
+    case 'pv.err': plMsg(String(m.reason||'Preview rejected.'),'errTxt'); LIVE.pvGot=true; clearTimeout(pvRetry); break;
+    case 'place.ok': LIVE.awaitCurrent=true; plMsg('Position confirmed – loading the current state …','okTxt'); break;
+    case 'place.err': plMsg(String(m.reason||'Rejected.'),'errTxt'); break;
+    case 'stopped': LIVE.pvLive=false; LIVE.current=null; LIVE.currentReady=false; LIVE.adopted=false; if(shown==='current') showPlan({keepCamera:true,keepView:true}); plMsg('Session ended.'); updateLiveUI(); break;
+    default: break;
+  }
+}
+/** If a session is already running in the mod (e.g. after reconnecting), its position is adopted. */
+function adoptStatusPlace(s){
+  if(!s.active||!s.place||LIVE.adopted||!planModel) return; LIVE.adopted=true;
+  const p=s.place; let found=null;
+  for(let rot=0;rot<4&&!found;rot++) for(const mir of [false,true]){ const m=placeModel(planModel,rot,mir); if(m.w===p.sx&&m.h===p.sy&&m.d===p.sz){ if(!found||(rot===PL.rot&&mir===PL.mir)) found={rot,mir}; } }
+  if(!found){ plMsg('Warning: the active area ('+p.sx+'×'+p.sy+'×'+p.sz+') does not match the loaded plan.','warnTxt'); return; }
+  PL.corner='nw'; PL.x=p.x; PL.y=p.y; PL.z=p.z; PL.rot=found.rot; PL.mir=found.mir; PL.set=true; syncPlFields(); savePL();
+  if(shown==='plan') showPlan({keepCamera:true,keepView:true});
+}
+function updateLiveUI(){
+  const on=LIVE.phase==='on', st=LIVE.status, active=!!(st&&st.active);
+  $('btnLive').textContent=on?'Disconnect':(LIVE.phase==='scan'?'Searching …':'Connect'); $('btnLive').disabled=LIVE.phase==='scan';
+  $('livePlace').style.display=on?'block':'none'; $('livePlace').classList.toggle('locked',active);
+  $('liveRun').style.display=(on&&active)?'block':'none';
+  $('btnPlace').disabled=!planModel||!on||active; $('btnPv').disabled=!planModel||!on||active;
+  let t='';
+  if(on&&st){ t='Mod '+st.mod+' · Minecraft '+st.mc+' · '+(st.inWorld?('World '+st.dim+' · you at '+st.player.join(' / ')):'no world open');
+    if(active) t+=' · chunks '+st.known+'/'+st.total+(st.paused?' · paused (other world/dimension)':''); }
+  $('liveInfo').textContent=t;
+  if(on&&!planModel) plMsg('Load a building plan first.','warnTxt');
+  updatePlInfo(); updateTabs();
+}
+function updatePlInfo(){
+  const c=curMin(), e=$('plInfo'); if(!c){ e.textContent=''; return; }
+  const err=Placement_checkSize(c.sx,c.sy,c.sz);
+  e.innerHTML='Size after rotation: <b>'+c.sx+' × '+c.sy+' × '+c.sz+'</b> (X × Y × Z)<br>Smallest corner: X '+c.x+' / Y '+c.y+' / Z '+c.z+'<br>Largest corner: X '+(c.x+c.sx-1)+' / Y '+(c.y+c.sy-1)+' / Z '+(c.z+c.sz-1)+(err?'<br><span class="errTxt">'+err+'</span>':'');
+}
+function Placement_checkSize(sx,sy,sz){
+  if(sx<1||sy<1||sz<1) return 'Invalid size'; if(sx>256||sy>256||sz>256) return 'Building plan too large (max. 256 blocks per axis)'; if(sx*sy*sz>4e6) return 'Building plan volume too large (max. 4 million blocks)'; return null;
+}
+function readPlFields(){
+  PL.corner=$('plCorner').value; PL.rot=+$('plRot').value|0; PL.mir=$('plMir').checked;
+  PL.x=Math.trunc(+$('plX').value)||0; PL.y=Math.trunc(+$('plY').value)||0; PL.z=Math.trunc(+$('plZ').value)||0;
+}
+function onPlChange(orientation){
+  const oldR=PL.rot, oldM=PL.mir; readPlFields(); PL.set=true; savePL(); updatePlInfo(); schedulePreview();
+  if(orientation&&(oldR!==PL.rot||oldM!==PL.mir)&&shown==='plan') showPlan({keepCamera:false});
+}
+for(const id of ['plCorner','plX','plY','plZ']) $(id).addEventListener('input',()=>onPlChange(false));
+for(const id of ['plRot','plMir']) $(id).addEventListener('change',()=>onPlChange(true));
+$('btnPlHere').onclick=()=>{ const s=LIVE.status; if(!s||!s.inWorld){ plMsg('You are not in a world right now.','warnTxt'); return; }
+  $('plX').value=s.player[0]; $('plY').value=s.player[1]-1; $('plZ').value=s.player[2]; onPlChange(false); plMsg('X/Z = your position, Y = the block under your feet (lowest plan layer).'); };
+$('btnPlace').onclick=()=>{
+  const c=curMin(); if(!c||LIVE.phase!=='on') return;
+  const err=Placement_checkSize(c.sx,c.sy,c.sz); if(err){ plMsg(err,'errTxt'); return; }
+  if(shown==='current'||shown==='pv') showPlan({keepCamera:true,keepView:true});
+  LIVE.pvLive=false; plMsg('Sending position …'); wsSend({t:'place',x:c.x,y:c.y,z:c.z,sx:c.sx,sy:c.sy,sz:c.sz,key:modelKey(planModel)+'|r'+PL.rot+(PL.mir?'m':'')});
+};
+$('btnPv').onclick=()=>{ LIVE.pvLive=true; requestPreview(); };
+$('plMargin').addEventListener('input',schedulePreview);
+$('btnStop').onclick=()=>wsSend({t:'stop'});
+$('btnSnap').onclick=()=>wsSend({t:'snapshot'});
+$('btnForget').onclick=()=>{ if(confirm('Discard the state the mod saved for this position? (The terrain is read again as the baseline at the next start.)')) wsSend({t:'forget'}); };
+$('btnLive').onclick=()=>{ if(LIVE.phase==='on') liveDisconnect(); else liveConnect(); };
+$('liveCode').addEventListener('keydown',e=>{ if(e.key==='Enter') $('btnLive').onclick(); });
+try{ const c=localStorage.getItem('mcbuild:code'); if(c) $('liveCode').value=c; }catch(e){}
+try{ const hs=localStorage.getItem('mcbuild:host'); if(hs) $('liveHost').value=hs; }catch(e){}
+if(SERVED){ $('liveAdv').style.display='none'; }
+$('liveHost').oninput=()=>{ try{ localStorage.setItem('mcbuild:host',$('liveHost').value.trim()); }catch(e){} updateNetWarn(); };
+updateNetWarn();
+$('chkHideFill').checked=hideFill;
+$('chkHideFill').onchange=e=>{ hideFill=e.target.checked; try{ localStorage.setItem('mcbuild:hidefill',hideFill?'1':'0'); }catch(_){} if(shown==='current') scheduleCurrent(true); };
+updateLiveUI();
+
+/* ---------- Files, resource pack, drag & drop, restore ---------- */
+const isPackFile=f=>/\.(zip|jar)$/i.test(f.name);
+/** Read a file (FileReader fallback for older Safari versions without File.arrayBuffer) */
+const readBuf=f=>f.arrayBuffer?f.arrayBuffer():new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(r.error); r.readAsArrayBuffer(f); });
+async function openModelFile(file){
+  showLoading('Reading '+file.name+' …');
+  const buf=await readBuf(file); const m=await parseAny(file.name,buf);
+  await setPlan(m); idbPut('last',{name:file.name,buf}).catch(()=>{});
+}
+async function applyPackFile(file){
+  showLoading('Reading resource pack …');
+  const buf=await readBuf(file);
+  PACK=await loadPackFrom(await getJSZip(),buf,file.name,showLoading);
+  idbPut('pack',{name:file.name,buf}).catch(()=>{});
+  updatePackUI();
+}
+/** Accepts a building plan and/or resource pack (dialog or drag & drop) */
+async function handleFiles(files){
+  const list=[...files], pack=list.find(isPackFile), other=list.find(f=>!isPackFile(f));
+  let packOk=false;
+  if(pack){ try{ await applyPackFile(pack); packOk=true; }catch(err){ console.error(err); showLoading(''); alert('Resource pack could not be read: '+err.message); } }
+  try{
+    if(other) await openModelFile(other);
+    else if(packOk&&model){ await refreshView(); }   // same model with new textures
+  }catch(err){ console.error(err); alert('File could not be read: '+err.message); }
+  finally{ showLoading(''); }
+}
+$('packInput').onchange=e=>{ const fl=Array.from(e.target.files||[]); e.target.value=''; if(fl.length) handleFiles([fl[0]]); };
+$('btnPackClear').onclick=async()=>{ PACK=null; idbDel('pack').catch(()=>{}); updatePackUI(); if(model){ await refreshView(); } };
+try{ if(localStorage.getItem('mcbuild:cdn')==='0') $('chkCdn').checked=false; }catch(e){}
+$('chkCdn').onchange=async e=>{
+  try{ localStorage.setItem('mcbuild:cdn',e.target.checked?'1':'0'); }catch(_){}
+  if(e.target.checked) cdnFailed=false;
+  if(model){ await refreshView(); }
+};
+updatePackUI();
+
+let dragN=0;
+addEventListener('dragenter',e=>{ e.preventDefault(); dragN++; $('drop').style.display='flex'; });
+addEventListener('dragleave',e=>{ e.preventDefault(); if(--dragN<=0){ dragN=0; $('drop').style.display='none'; } });
+addEventListener('dragover',e=>e.preventDefault());
+addEventListener('drop',e=>{ e.preventDefault(); dragN=0; $('drop').style.display='none'; if(e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
+
+function idbOpen(){ return new Promise((res,rej)=>{ let r; try{ r=indexedDB.open('mcbuild',1); }catch(e){ rej(e); return; }
+  const to=setTimeout(()=>rej(new Error('IndexedDB is not responding')),3000);
+  r.onupgradeneeded=()=>r.result.createObjectStore('f'); r.onsuccess=()=>{ clearTimeout(to); res(r.result); }; r.onerror=()=>{ clearTimeout(to); rej(r.error); }; r.onblocked=()=>{ clearTimeout(to); rej(new Error('IndexedDB blocked')); }; }); }
+async function idbPut(k,v){ const db=await idbOpen(); return new Promise((res,rej)=>{ const t=db.transaction('f','readwrite'); t.objectStore('f').put(v,k); t.oncomplete=res; t.onerror=()=>rej(t.error); }); }
+async function idbGet(k){ const db=await idbOpen(); return new Promise((res,rej)=>{ const t=db.transaction('f'); const r=t.objectStore('f').get(k); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function idbDel(k){ const db=await idbOpen(); return new Promise((res,rej)=>{ const t=db.transaction('f','readwrite'); t.objectStore('f').delete(k); t.oncomplete=res; t.onerror=()=>rej(t.error); }); }
+(async()=>{
+  try{ const p=await idbGet('pack'); if(p){ showLoading('Loading saved resource pack …'); PACK=await loadPackFrom(await getJSZip(),p.buf,p.name,showLoading); } }
+  catch(e){ console.warn('Resource pack not restored',e); }
+  updatePackUI(); showLoading('');
+  try{ const last=await idbGet('last'); if(last){ await setPlan(last.demo?demoModel():await parseAny(last.name,last.buf)); } }
+  catch(e){ console.warn('Last model not restored',e); }
+})();
+
+const clock=new THREE.Clock();
+(function loop(){ const dt=Math.min(clock.getDelta(),.1); fly(dt); if(view2d||phoneMode) controls.update(); if(viewDirty) syncGeometry(); maybeSort(); renderer.render(scene,camera); requestAnimationFrame(loop); })();
+addEventListener('beforeunload',saveProgress);
+window.MCB.ready();
+})().catch(function(e){ console.error(e); window.MCB.fail(e,'Startup error'); });
+</script>
+</body>
+</html>
