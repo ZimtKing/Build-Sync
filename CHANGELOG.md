@@ -1,26 +1,45 @@
 # Changelog (author: ZimtKing, as of 2026-10-25)
 
-## Viewer (index-vXX.html)
-- v1–v12: viewer with schematic import, textures, resource pack, layers, 2D view, spectator camera, hidden mouse, phone controls.
-- v13: live-sync UI (pairing code, placement with rotate/mirror, plan/current switch, hide underground).
-- v14: live connection tested against the mod core; automatic switch to the current view after confirming.
-- v15: surroundings preview before confirming (with ground-height hint).
-- v16: clear messages for an empty build area; "my position" uses the block under the feet.
-- v17: key I toggles plan/current (also while a number field has focus).
-- v18: first mipmap smoothing against flickering gaps.
-- v19: texture border (padding) against light lines between blocks.
-- v20: selectable texture filter (intermediate step).
-- v21: mipmap levels 0–4 like in Minecraft.
-- v22: the whole tool is English (UI, messages, errors, code comments); permanent file-type hint under the upload button; understands the `current.*` messages of mod 0.2.1; fixed the lockout message (the viewer now matches the mod's reason "locked"). Views are named Plan / Current / Preview.
-
-- v23: works over the home network: when the page is opened from the mod (`http://PC-IP:port`) it connects to that address automatically; optional "Advanced: connect over my network" field (private IP addresses only, names and public addresses are refused); warning dialog before the pairing code is sent over the network, permanent yellow notice while connected over the network; clearer message for an invalid port. Needs mod 0.3.0.
+## Viewer (BuildSync-vXX.html)
+v0.0.1-dev: - added basic camera movement
+            - added core foundation for file uploading and rendering
+v0.0.2-dev: - fixed a visual bug that rendered non-full blocks as full blocks.
+            - fixed textures
+            - added y-axis slider to adjust building plan height and progress status
+v0.0.3-dev: - added feature to upload texture packs
+v0.0.4-dev: - fixed upload bug on mobile devices (3D-model not rendering)
+              - fixed missing block faces in some scenarios
+v0.0.5-dev: - added 2D top-down feature
+v0.0.6-dev: - fixed a bug that caused transparent textures to render invisible
+v0.0.7-dev: - fixed a problem that caused 3D-models to not render in rare occassions
+v0.0.8-dev: - added "free-cam" mode that functions like minecraft spectator mode or freecam mod
+v0.0.9-dev: - fixed the loader because there was a bug that caused the file to not open at all
+            - fixed the freecam mode so the mouse cursor fully disappears (keybind "l")
+            - added look sensitivity slider for freecam mode
+v0.1.0-dev: - fixed a bug that caused the mouse cursor to reappear in the menu
+v0.1.1-dev: - fixed the freecam so it stops moving when pressing l
+v0.1.2-dev: - fixed a camera bug that caused the mouse to snap in some scenarios
+v0.1.3-dev: - added live-sync core foundations and compatibility with the mod (v0.0.1)
+            - added keybind "i" that switches between plan and current mode
+v0.1.4-dev: - fixed live connection with the mod
+v0.1.5-dev: - added preview of the surroundings when entering coordinates
+v0.1.6-dev: - added clear error message when connection failed
+            - fixed a bug that caused blocks to not show in the viewer
+v0.1.7-dev: - fixed keybind "i"
+v0.1.8-dev: - added mipmap to counter flickering
+v0.1.9-dev: - fixed texture borders against light lines between blocks
+v0.2.0-dev: - fixed texture filtering
+v0.2.1-dev: - added mipmap slider (level 0-4)
+**v0.2.2-release:** - translated tool from German to English
+**v0.2.3-release:** - added feature to connect tool with mod cross-device. Needs mod v0.3.0-release
+        
 
 ## Mod (BuildSync)
-- 0.1.0: Java core + Fabric layer, Gradle project, GitHub action.
-- 0.1.1: the topmost block of each column is shown as real (floors/roofs used to appear as stone); hatches/doors stay hidden. Build files (Gradle 9.7.1, chmod +x gradlew, --no-daemon) taken from ZimtKing's working setup.
-- 0.1.2: all code comments translated to English; unused legacy files (Session, Terrain, …) removed.
-- 0.1.3: all remaining texts of the mod translated to English (in-game messages, log lines, error texts, tests, README/GUIDE/CHANGELOG). Protocol reason texts are now English ("locked", "wrong code"); the viewer accepts both.
-- 0.2.0: everything English, including the wire protocol and UI names: messages `ist.*` became `actual.*`, `IstEngine` became `ActualEngine`, "Soll/Ist" became "Plan/Actual" (replaced by 0.2.1 right away), UI labels in the guide are English.
-- 0.2.1: "actual" renamed to "current" (viewer tab "Current", messages `current.*`, `CurrentEngine`; wording "planned state" / "current state"). Needs viewer v22 from the same date. Version 0.2.0 used `actual.*` and is replaced by this one.
-- 0.2.1 (follow-up): last German test messages and comments translated (tests only, no change to the mod itself).
-- 0.3.0: optional LAN mode for phones/tablets in the home network. `/buildsync lan on` shows a warning, `/buildsync lan confirm` (within 30 s) switches it on, `/buildsync lan off` switches it off; always off after a restart. Only private addresses are accepted (never the internet), host must be a literal IP (against DNS rebinding), pairing code and lockout as before. In LAN mode the mod serves the bundled viewer at `http://PC-IP:port` (only `/` and `/index.html`). `/buildsync status` now shows server, LAN mode, viewer connected and session; the bare `/buildsync` command was removed. 83 core tests (new: address rules, host rules, confirmation window, page serving). Needs viewer v23.
+v0.0.1-dev: - created basic mod foundation for Fabric
+v0.1.0-dev: - fixed basic anti-xray feature
+v0.1.2-dev: - translated code comments to English
+v0.1.3-dev: - fixed protocol reason texts
+v0.2.0-dev: - translated missing German comments to English
+            - fixed a bug that caused the ingame commands /buildsync newcode to not generate a new code
+**v0.2.1-release:** - "actual" renamed to "current" for the viewer. Needs viewer v0.2.2-release
+**v0.3.0-release:** - added optional lan mode: `/buildsync lan on` shows a warning, `/buildsync lan confirm` (within 30 s) switches it on, `/buildsync lan off` switches it                          off; always off after a restart. Only private addresses are accepted (never the internet), host must be a literal IP (against DNS rebinding), pairing                           code and lockout as before. In LAN mode the mod serves the bundled viewer at `http://PC-IP:port` (only `/` and `/index.html`). `/buildsync status` now                         shows server, LAN mode, viewer connected and session; the bare `/buildsync` command was removed. (new: address rules, host rules,                                              confirmation window, page serving). Needs viewer v0.2.3-release
