@@ -2,8 +2,8 @@
 
 ## Viewer (BuildSync-vXX.html)
 * v0.0.1-dev:
-            - added basic camera movement
-            - added core foundation for file uploading and rendering
+  - added basic camera movement
+  - added core foundation for file uploading and rendering
 * v0.0.2-dev:
             - fixed a visual bug that rendered non-full blocks as full blocks.
             - fixed textures
